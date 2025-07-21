@@ -1,18 +1,37 @@
 {
-	"name": "xyc",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
-		"test": "vitest",
-		"cf-typegen": "wrangler types"
-	},
-	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.19",
-		"typescript": "^5.5.2",
-		"vitest": "~3.2.0",
-		"wrangler": "^4.25.0"
-	}
+  "name": "xbot",
+  "version": "1.0.0",
+  "description": "A Telegram bot running on Cloudflare Workers with TypeScript.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "telegram",
+    "bot",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240718.0",
+    "@octokit/rest": "^20.1.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.15",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "eslint": "^9.31.0",
+    "jest": "^30.0.4",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.5.3",
+    "wrangler": "^4.25.0"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
+  }
 }
