@@ -8,6 +8,7 @@ import { ValidatedEnv } from './utils/env';
  */
 export interface Env {
 	TELEGRAM_BOT_TOKEN: string;
+	TELEGRAM_SECRET_TOKEN: string; // Used to verify requests from Telegram
 	ALLOWED_USER_ID: string; // Stored as string, parsed to number in code
 	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
 	GITHUB_REPO_OWNER: string; // e.g., "xieyuschen"
@@ -22,6 +23,7 @@ export interface Env {
  */
 export interface TelegramUpdate {
 	message?: {
+		message_id: number;
 		chat: {
 			id: number;
 		};
@@ -44,7 +46,8 @@ export interface Command {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: ValidatedEnv
+		env: ValidatedEnv,
+		update: TelegramUpdate
 	) => Promise<Response>;
 }
 

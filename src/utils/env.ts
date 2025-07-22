@@ -7,6 +7,7 @@ import { Env } from '../types';
  */
 export interface ValidatedEnv {
 	telegramBotToken: string;
+	telegramSecretToken: string;
 	allowedUserId: number;
 	githubToken: string;
 	githubRepoOwner: string;
@@ -27,6 +28,9 @@ export function validateAndParseEnv(env: Env): ValidatedEnv {
 	// Validate TELEGRAM_BOT_TOKEN
 	if (!env.TELEGRAM_BOT_TOKEN) {
 		throw new Error('Missing environment variable: TELEGRAM_BOT_TOKEN');
+	}
+	if (!env.TELEGRAM_SECRET_TOKEN) {
+		throw new Error('Missing environment variable: TELEGRAM_SECRET_TOKEN');
 	}
 
 	// Validate and parse ALLOWED_USER_ID
@@ -62,6 +66,7 @@ export function validateAndParseEnv(env: Env): ValidatedEnv {
 
 	return {
 		telegramBotToken: env.TELEGRAM_BOT_TOKEN,
+		telegramSecretToken: env.TELEGRAM_SECRET_TOKEN,
 		allowedUserId: allowedUserId,
 		githubToken: env.GITHUB_TOKEN,
 		githubRepoOwner: env.GITHUB_REPO_OWNER,
