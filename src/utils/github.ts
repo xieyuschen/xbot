@@ -54,7 +54,7 @@ export async function getGitHubFileContent(
 			typeof data.content === 'string' &&
 			data.encoding === 'base64'
 		) {
-			const decodedContent = atob(data.content); // Decode base64
+			const decodedContent = base64ToUtf8(data.content);
 			return { content: decodedContent, sha: data.sha };
 		} else {
 			throw new Error(
@@ -71,9 +71,21 @@ export async function getGitHubFileContent(
 }
 
 function utf8ToBase64(content: string): string {
-  const encoder = new TextEncoder();
-  const utf8Bytes = encoder.encode(content); // Encode string to UTF-8 bytes
-  return btoa(String.fromCharCode(...utf8Bytes)); // Convert bytes to Base64
+	const encoder = new TextEncoder();
+	const utf8Bytes = encoder.encode(content); // Encode string to UTF-8 bytes
+	return btoa(String.fromCharCode(...utf8Bytes)); // Convert bytes to Base64
+}
+
+function base64ToUtf8(base64Content: string): string {
+	const decodedBytes = atob(base64Content); // Decode Base64 to a string of bytes (each char is a byte)
+	const utf8Bytes = new Uint8Array(decodedBytes.length);
+
+	for (let i = 0; i < decodedBytes.length; i++) {
+		utf8Bytes[i] = decodedBytes.charCodeAt(i);
+	}
+
+	const decoder = new TextDecoder('utf-8'); // Decode UTF-8 bytes to a string
+	return decoder.decode(utf8Bytes);
 }
 
 /**

@@ -22,3 +22,24 @@ export async function sendTelegramMessage(
 		}),
 	});
 }
+
+// telegram supports limited reaction emoji,
+// see https://core.telegram.org/bots/api#reactiontype
+export async function sendTelegramReaction(
+	telegramApiUrl: string,
+	chatId: number,
+	messageId: number,
+	emoji: string = '👀'
+): Promise<Response> {
+	const setReactionUrl = `${telegramApiUrl}/setMessageReaction`;
+	return fetch(setReactionUrl, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			chat_id: chatId,
+			message_id: messageId,
+			reaction: [{ type: 'emoji', emoji: emoji }],
+			is_big: false, // Set to true for a bigger animation
+		}),
+	});
+}

@@ -1,29 +1,34 @@
 // src/commands/echo.ts
 
-import { Command } from '../types';
+import { Command, TelegramUpdate } from '../types';
+import { ValidatedEnv } from '../utils/env';
 import { addContentToGitHubFile } from '../utils/github';
-import { sendTelegramMessage } from '../utils/telegram';
+import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
 
 const noteCommand: Command = {
 	name: 'note',
 	description: 'Note the input down',
 	requiresInput: true,
-	async execute(chatId, messageText, telegramApiUrl, env) {
+	async execute(
+		chatId: number,
+		messageText: string,
+		telegramApiUrl: string,
+		env: ValidatedEnv,
+		update: TelegramUpdate
+	) {
 		const text = messageText.replace('/note', '').trimStart();
-    if (text === ""){
-      return new Response('OK', { status: 200 });
-    }
-
+		if (text === '') {
+			return new Response('OK', { status: 200 });
+		}
 		try {
 			// Attempt to add content to the GitHub file
 			await addContentToGitHubFile(text, env);
 
-			// If successful, send success message to the user
-			await sendTelegramMessage(
-				telegramApiUrl,
-				chatId,
-				'Recorded successfully.'
-			);
+			const messageId = update.message?.message_id;
+			if (messageId === undefined) {
+				throw new Error('Message ID is undefined, cannot send reaction');
+			}
+			await sendTelegramReaction(telegramApiUrl, chatId, messageId);
 			return new Response('OK', { status: 200 });
 		} catch (error: any) {
 			// Log the error for debugging

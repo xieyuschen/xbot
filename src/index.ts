@@ -20,6 +20,13 @@ export default {
 				headers: { 'Content-Type': 'text/plain' },
 			});
 		}
+		const telegramSecretToken = request.headers.get(
+			'X-Telegram-Bot-Api-Secret-Token'
+		);
+		if (telegramSecretToken !== env.TELEGRAM_SECRET_TOKEN) {
+			console.error('Invalid Telegram secret token');
+			return new Response('Invalid secret token', { status: 403 });
+		}
 
 		let validatedEnv: ValidatedEnv;
 		try {
@@ -88,10 +95,16 @@ async function handleTelegramUpdate(
 
 		if (commandHandler) {
 			// Pass the validatedEnv to the command's execute method
-			return commandHandler.execute(chatId, messageText, telegramApiUrl, env);
+			return commandHandler.execute(
+				chatId,
+				messageText,
+				telegramApiUrl,
+				env,
+				update
+			);
 		}
 	}
 
 	// note down the things we want.
-	return noteCommand.execute(chatId, messageText, telegramApiUrl, env)
+	return noteCommand.execute(chatId, messageText, telegramApiUrl, env, update);
 }
