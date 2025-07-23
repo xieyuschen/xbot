@@ -15,6 +15,7 @@ export interface ValidatedEnv {
 	githubFilePath: string;
 	githubCommitMessage: string;
 	githubBranchName: string;
+	fmpAPIKey: string;
 }
 
 /**
@@ -64,6 +65,10 @@ export function validateAndParseEnv(env: Env): ValidatedEnv {
 		throw new Error('Missing environment variable: GITHUB_BRANCH_NAME');
 	}
 
+	if (!env.FMP_API_KEY) {
+		throw new Error('Missing environment variable: FMP_API_KEY');
+	}
+
 	return {
 		telegramBotToken: env.TELEGRAM_BOT_TOKEN,
 		telegramSecretToken: env.TELEGRAM_SECRET_TOKEN,
@@ -74,5 +79,6 @@ export function validateAndParseEnv(env: Env): ValidatedEnv {
 		githubFilePath: env.GITHUB_FILE_PATH,
 		githubCommitMessage: env.GITHUB_COMMIT_MESSAGE,
 		githubBranchName: env.GITHUB_BRANCH_NAME,
+		fmpAPIKey: env.FMP_API_KEY,
 	};
 }

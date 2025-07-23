@@ -16,6 +16,7 @@ export interface Env {
 	GITHUB_FILE_PATH: string; // e.g., "docs/glossary/sync.md"
 	GITHUB_COMMIT_MESSAGE: string; // e.g., "Update file content"
 	GITHUB_BRANCH_NAME: string; // e.g., "main" or "xxx"
+	FMP_API_KEY: string;
 }
 
 /**

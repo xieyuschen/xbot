@@ -5,12 +5,14 @@ import startCommand from './start';
 import helpCommand from './help';
 import noteCommand from './note';
 import echoCommand from './echo';
+import stockCommand from './stock';
 
 const commands: { [key: string]: Command } = {
 	start: startCommand,
 	help: helpCommand,
 	echo: echoCommand,
 	note: noteCommand,
+	stock: stockCommand,
 };
 
 /**
