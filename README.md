@@ -5,6 +5,7 @@ Xbot is a telegram bot running inside cloudflare worker for personal usages.
 ## Feature
 
 - `note`: append the input to a specified github repo branch file, it's used for me to add my daily whispers and random thoughts.
+- `stock`: show the changes of a stock, separated by `;`.
 - `echo`: an inital command
 - `help`: a command to print all available commands.
 
@@ -24,6 +25,7 @@ npx wrangler secret put GITHUB_COMMIT_MESSAGE
 npx wrangler secret put GITHUB_BRANCH_NAME
 # this is used to ensure the request comes from the real telegram, rather than a malicous attacker.
 npx wrangler secret put TELEGRAM_SECRET_TOKEN
+npx wrangler secret put FMP_API_KEY
 ```
 
 3. Bind your bot to your running domain, for example, I use `xbot.dangui.org`.
@@ -40,3 +42,9 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 ```
 
 4. run `npm run deploy` to deploy to cloudflare worker.
+
+## Dev
+
+```
+npx prettier --write "**/*.ts"
+```
