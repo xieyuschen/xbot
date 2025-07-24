@@ -1,7 +1,7 @@
 // src/commands/start.ts
 
 import { Command } from '../types';
-import { ValidatedEnv } from '../utils/env';
+import { Config } from '../utils/config';
 import { sendTelegramMessage } from '../utils/telegram';
 
 /**
@@ -11,7 +11,7 @@ const startCommand: Command = {
 	name: 'start',
 	requiresInput: false,
 	description: 'Starts the bot and sends a welcome message.',
-	async execute(chatId, messageText, telegramApiUrl, env: ValidatedEnv) {
+	async execute(chatId, _, telegramApiUrl) {
 		const responseText =
 			'Hello! Welcome to xbot. Type /help to see what I can do!';
 		await sendTelegramMessage(telegramApiUrl, chatId, responseText);

@@ -1,4 +1,4 @@
-import { ValidatedEnv } from './env';
+import { Config } from './config';
 
 // This interface assumes a basic structure of the stock quote response.
 // You might need to adjust it based on the exact FMP response.
@@ -13,11 +13,10 @@ export interface FmpQuote {
 	yearHigh: number;
 	yearLow: number;
 	marketCap: number;
-	// ... potentially many more fields
 }
 
 export async function getStockQuote(
-	env: ValidatedEnv,
+	env: Config,
 	symbol: string
 ): Promise<FmpQuote | null> {
 	const apiUrl = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${env.fmpAPIKey}`;

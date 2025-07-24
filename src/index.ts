@@ -3,7 +3,7 @@
 import { Env, TelegramUpdate } from './types';
 import { getCommand } from './commands';
 import { sendTelegramMessage } from './utils/telegram';
-import { validateAndParseEnv, ValidatedEnv } from './utils/env';
+import { initConfig, Config } from './utils/config';
 import noteCommand from './commands/note';
 
 export default {
@@ -28,12 +28,11 @@ export default {
 			return new Response('Invalid secret token', { status: 403 });
 		}
 
-		let validatedEnv: ValidatedEnv;
+		let cfg: Config;
 		try {
-			// Validate and parse environment variables first
-			validatedEnv = validateAndParseEnv(env);
+			cfg = await initConfig(env);
 		} catch (error: any) {
-			console.error('Environment variable error:', error.message);
+			console.error('Init configuration error:', error.message);
 			return new Response(`Configuration Error: ${error.message}`, {
 				status: 200,
 			});
@@ -43,7 +42,7 @@ export default {
 			const update: TelegramUpdate = await request.json();
 
 			// Pass the validated and parsed environment variables to the update handler
-			return handleTelegramUpdate(update, validatedEnv);
+			return handleTelegramUpdate(update, cfg);
 		} catch (error: any) {
 			console.error('Error processing request:', error);
 			// For general request processing errors, return 200 OK to Telegram
@@ -55,15 +54,9 @@ export default {
 	},
 };
 
-/**
- * Handles incoming Telegram updates, validating user and processing commands.
- * @param {TelegramUpdate} update - The incoming Telegram update object.
- * @param {ValidatedEnv} env - The validated and parsed environment variables.
- * @returns {Promise<Response>} - A Cloudflare Worker Response object.
- */
 async function handleTelegramUpdate(
 	update: TelegramUpdate,
-	env: ValidatedEnv // Use the validated environment here
+	cfg: Config
 ): Promise<Response> {
 	const chatId = update.message?.chat?.id;
 	const messageText = update.message?.text;
@@ -74,9 +67,9 @@ async function handleTelegramUpdate(
 		return new Response('No valid message or chat ID found', { status: 200 });
 	}
 
-	const telegramApiUrl = `https://api.telegram.org/bot${env.telegramBotToken}`;
+	const telegramApiUrl = `https://api.telegram.org/bot${cfg.telegramBotToken}`;
 	// Authorize user: only the allowed user can interact with the bot.
-	if (userId !== env.allowedUserId) {
+	if (userId !== cfg.allowedUserId) {
 		await sendTelegramMessage(
 			telegramApiUrl,
 			chatId,
@@ -85,26 +78,31 @@ async function handleTelegramUpdate(
 		return new Response('Unauthorized user', { status: 200 });
 	}
 
-	// --- Command Parsing and Execution ---
-	// Commands are expected to start with a '/'
+	// store the chat id in kv so the cron could use it to send messages to the user.
+	let kvChatId = await cfg.KV_BINDING.get('CHAT_ID');
+	if (kvChatId === null || chatId.toString() != kvChatId) {
+		console.warn(`Chat ID mismatch: expected ${kvChatId}, got ${chatId}`);
+		await cfg.KV_BINDING.put('CHAT_ID', chatId.toString());
+	}
+
 	if (messageText.startsWith('/')) {
 		const parts = messageText.split(' ');
-		const commandName = parts[0].toLowerCase().substring(1); // Remove '/' and convert to lowercase
+		const commandName = parts[0].toLowerCase().substring(1);
 
 		const commandHandler = getCommand(commandName);
 
 		if (commandHandler) {
-			// Pass the validatedEnv to the command's execute method
+			const msgText = messageText.replace(`/${commandName}`, '').trim();
 			return commandHandler.execute(
 				chatId,
-				messageText,
+				msgText,
 				telegramApiUrl,
-				env,
+				cfg,
 				update
 			);
 		}
 	}
 
 	// note down the things we want.
-	return noteCommand.execute(chatId, messageText, telegramApiUrl, env, update);
+	return noteCommand.execute(chatId, messageText, telegramApiUrl, cfg, update);
 }

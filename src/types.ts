@@ -1,6 +1,6 @@
 // src/types.ts
 
-import { ValidatedEnv } from './utils/env';
+import { Config } from './utils/config';
 
 /**
  * Represents the environment variables available to the Worker.
@@ -9,14 +9,9 @@ import { ValidatedEnv } from './utils/env';
 export interface Env {
 	TELEGRAM_BOT_TOKEN: string;
 	TELEGRAM_SECRET_TOKEN: string; // Used to verify requests from Telegram
-	ALLOWED_USER_ID: string; // Stored as string, parsed to number in code
 	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
-	GITHUB_REPO_OWNER: string; // e.g., "xieyuschen"
-	GITHUB_REPO_NAME: string; // e.g., "site"
-	GITHUB_FILE_PATH: string; // e.g., "docs/glossary/sync.md"
-	GITHUB_COMMIT_MESSAGE: string; // e.g., "Update file content"
-	GITHUB_BRANCH_NAME: string; // e.g., "main" or "xxx"
 	FMP_API_KEY: string;
+	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
 }
 
 /**
@@ -47,7 +42,7 @@ export interface Command {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: ValidatedEnv,
+		env: Config,
 		update: TelegramUpdate
 	) => Promise<Response>;
 }

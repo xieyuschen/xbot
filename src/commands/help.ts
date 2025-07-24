@@ -1,7 +1,6 @@
 // src/commands/help.ts
 
 import { Command } from '../types';
-import { ValidatedEnv } from '../utils/env';
 import { sendTelegramMessage } from '../utils/telegram';
 import { getAllCommands } from './index';
 
@@ -12,10 +11,9 @@ const helpCommand: Command = {
 	name: 'help',
 	description: 'Shows available commands and their descriptions.',
 	requiresInput: false,
-	async execute(chatId, messageText, telegramApiUrl, env: ValidatedEnv) {
+	async execute(chatId, _, telegramApiUrl) {
 		const allCommands = getAllCommands();
 
-		// Build the response text
 		let responseText = 'Here are the available commands:\n\n';
 		responseText += allCommands
 			.map((cmd) => `/${cmd.name} - ${cmd.description}`)
