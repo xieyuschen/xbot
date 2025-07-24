@@ -1,6 +1,6 @@
 // src/utils/github.ts
 
-import { ValidatedEnv } from './env';
+import { Config } from './config';
 import { Octokit } from '@octokit/rest'; // Import Octokit
 
 /**
@@ -218,13 +218,13 @@ export function processFile(
  * Adds new content to the specified GitHub file, processing it based on date sections.
  * This is the main function that orchestrates the GitHub API calls and file processing.
  * @param {string} newContent - The content to add to the file.
- * @param {ValidatedEnv} env - The validated environment variables.
+ * @param {Config} env - The validated environment variables.
  * @returns {Promise<void>}
  * @throws {Error} If any step of the process fails.
  */
 export async function addContentToGitHubFile(
 	newContent: string,
-	env: ValidatedEnv
+	env: Config
 ): Promise<void> {
 	const {
 		githubRepoOwner,

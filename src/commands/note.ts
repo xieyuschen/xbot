@@ -1,7 +1,7 @@
 // src/commands/echo.ts
 
 import { Command, TelegramUpdate } from '../types';
-import { ValidatedEnv } from '../utils/env';
+import { Config } from '../utils/config';
 import { addContentToGitHubFile } from '../utils/github';
 import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
 
@@ -13,16 +13,15 @@ const noteCommand: Command = {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: ValidatedEnv,
+		env: Config,
 		update: TelegramUpdate
 	) {
-		const text = messageText.replace('/note', '').trimStart();
-		if (text === '') {
+		if (messageText === '') {
 			return new Response('OK', { status: 200 });
 		}
 		try {
 			// Attempt to add content to the GitHub file
-			await addContentToGitHubFile(text, env);
+			await addContentToGitHubFile(messageText, env);
 
 			const messageId = update.message?.message_id;
 			if (messageId === undefined) {

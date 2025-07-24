@@ -1,7 +1,5 @@
-// src/commands/echo.ts
-
-import { Command, TelegramUpdate } from '../types';
-import { ValidatedEnv } from '../utils/env';
+import { Command } from '../types';
+import { Config } from '../utils/config';
 import {
 	FmpQuote,
 	formatStockDataForTelegram,
@@ -17,20 +15,19 @@ const stockCommand: Command = {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: ValidatedEnv
+		env: Config
 	) {
-		const symbolsInput = messageText.replace('/' + this.name, '').trim();
-		if (symbolsInput === '') {
+		if (messageText === '') {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
 				'Please provide a stock symbol. E.g., `/stock AAPL`'
 			);
-			return new Response('OK', { status: 200 }); // Always return OK to Telegram
+			return new Response('OK', { status: 200 });
 		}
 
 		// Split by comma to allow multiple symbols, then trim and filter empty strings
-		const symbolsToFetch = symbolsInput
+		const symbolsToFetch = messageText
 			.split(';')
 			.map((s) => s.trim().toUpperCase())
 			.filter((s) => s.length > 0);

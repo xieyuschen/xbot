@@ -11,8 +11,7 @@ const echoCommand: Command = {
 	description: 'Repeats back the provided text.',
 	requiresInput: false,
 	async execute(chatId, messageText, telegramApiUrl) {
-		const echoText = messageText.replace('/echo ', '');
-		const responseText = `You said: ${echoText}`;
+		const responseText = `You said: ${messageText}`;
 		await sendTelegramMessage(telegramApiUrl, chatId, responseText);
 		return new Response('OK', { status: 200 });
 	},
