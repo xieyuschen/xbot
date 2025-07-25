@@ -18,17 +18,21 @@ If no commands is provided, the bot will note it down by default.
 ```
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put GITHUB_REPO_OWNER
-npx wrangler secret put GITHUB_REPO_NAME
-npx wrangler secret put GITHUB_FILE_PATH
-npx wrangler secret put GITHUB_COMMIT_MESSAGE
-npx wrangler secret put GITHUB_BRANCH_NAME
 # this is used to ensure the request comes from the real telegram, rather than a malicous attacker.
 npx wrangler secret put TELEGRAM_SECRET_TOKEN
 npx wrangler secret put FMP_API_KEY
 ```
+3. put some configurations inside bound cloudflare kv store. You may update the `id` filed of `kv_namespaces` inside `wrangler.jsonc`.
+```
+GITHUB_REPO_OWNER
+GITHUB_REPO_NAME
+GITHUB_FILE_PATH
+GITHUB_COMMIT_MESSAGE
+GITHUB_BRANCH_NAME
+ALLOWED_USER_ID
+```
 
-3. Bind your bot to your running domain, for example, I use `xbot.dangui.org`.
+4. Bind your bot to your running domain, for example, I use `xbot.dangui.org`.
 ```sh
 # Generate a 64-character alphanumeric string (letters and numbers) in macos
 head -c 1024 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 64; echo
@@ -41,7 +45,7 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
      -F "secret_token=${TELEGRAM_WEBHOOK_SECRET}"
 ```
 
-4. run `npm run deploy` to deploy to cloudflare worker.
+5. run `npm run deploy` to deploy to cloudflare worker.
 
 ## Dev
 
