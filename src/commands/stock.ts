@@ -17,17 +17,37 @@ const stockCommand: Command = {
 		telegramApiUrl: string,
 		env: Config
 	) {
-		if (messageText === '') {
-			await sendTelegramMessage(
-				telegramApiUrl,
-				chatId,
-				'Please provide a stock symbol. E.g., `/stock AAPL`'
-			);
+		// todo: support subcommand framework in existing framework.
+		if (messageText.trim().toLowerCase().startsWith('add')) {
+			const symbolToAdd = messageText.replace(/^add\s+/i, '').trim().toUpperCase();
+			if (!symbolToAdd) {
+				await sendTelegramMessage(
+					telegramApiUrl,
+					chatId,
+					'Please provide a stock symbol to add. E.g., `/stock add AAPL`'
+				);
+				return new Response('OK', { status: 200 });
+			}
+
+			if (!env.stockSymbols.includes(symbolToAdd)) {
+				await env.KV_BINDING.put('STOCK_SYMBOLS', [env.stockSymbols, symbolToAdd].join(';'));
+				await sendTelegramMessage(
+					telegramApiUrl,
+					chatId,
+					`Symbol ${symbolToAdd} added to your watchlist.`
+				);
+			} else {
+				await sendTelegramMessage(
+					telegramApiUrl,
+					chatId,
+					`Symbol ${symbolToAdd} is already in your watchlist.`
+				);
+			}
 			return new Response('OK', { status: 200 });
 		}
 
-		// Split by comma to allow multiple symbols, then trim and filter empty strings
-		const symbolsToFetch = messageText
+		const shareList = messageText === '' ? env.stockSymbols : messageText;
+		const symbolsToFetch = shareList
 			.split(';')
 			.map((s) => s.trim().toUpperCase())
 			.filter((s) => s.length > 0);

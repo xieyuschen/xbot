@@ -62,6 +62,7 @@ export async function initConfig(env: Env): Promise<Config> {
 	const githubCommitMessage = await kv.get('GITHUB_COMMIT_MESSAGE');
 	const githubBranchName = await kv.get('GITHUB_BRANCH_NAME');
 	const stockSymbols = await kv.get('STOCK_SYMBOLS');
+	const symbol = stockSymbols === null ? "" : stockSymbols;
 
 	guardEmpty(githubRepoOwner, 'GITHUB_REPO_OWNER', 'kv namespace');
 	guardEmpty(githubRepoName, 'GITHUB_REPO_NAME', 'kv namespace');
@@ -79,7 +80,7 @@ export async function initConfig(env: Env): Promise<Config> {
 		githubFilePath: githubFilePath,
 		githubCommitMessage: githubCommitMessage,
 		githubBranchName: githubBranchName,
-		stockSymbols: stockSymbols,
+		stockSymbols: symbol,
 	};
 }
 
