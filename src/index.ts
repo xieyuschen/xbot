@@ -5,8 +5,48 @@ import { getCommand } from './commands';
 import { sendTelegramMessage } from './utils/telegram';
 import { initConfig, Config } from './utils/config';
 import noteCommand from './commands/note';
+import stockCommand from './commands/stock';
 
 export default {
+		async scheduled(
+		controller: ScheduledController,
+		env: Env,
+		ctx: ExecutionContext
+	) {
+		let cfg: Config;
+		try {
+			cfg = await initConfig(env);
+		} catch (error: any) {
+			console.error('Init configuration error:', error.message);
+			return new Response(`Configuration Error: ${error.message}`, {
+				status: 200,
+			});
+		}
+		const chatId = await env.KV_BINDING.get('CHAT_ID');
+		if (!chatId) {
+			console.warn('No chat ID found in KV, cannot send scheduled message');
+			return new Response('No chat ID found', { status: 200 });
+		}
+		const update: TelegramUpdate = {};
+
+		stockCommand
+			.execute(
+				Number(chatId),
+				cfg.stockSymbols,
+				`https://api.telegram.org/bot${cfg.telegramBotToken}`,
+				cfg,
+				update
+			)
+			.then(() => {
+				console.log('Scheduled stock command executed successfully');
+			})
+			.catch((error: any) => {
+				console.error(
+					'Error executing scheduled stock command:',
+					error.message
+				);
+			});
+	},
 	/**
 	 * Main fetch handler for the Cloudflare Worker.
 	 * @param {Request} request - The incoming request.
