@@ -218,22 +218,23 @@ export function processFile(
  * Adds new content to the specified GitHub file, processing it based on date sections.
  * This is the main function that orchestrates the GitHub API calls and file processing.
  * @param {string} newContent - The content to add to the file.
- * @param {Config} env - The validated environment variables.
+ * @param {Config} cfg - The validated environment variables.
  * @returns {Promise<void>}
  * @throws {Error} If any step of the process fails.
  */
 export async function addContentToGitHubFile(
 	newContent: string,
-	env: Config
+	cfg: Config
 ): Promise<void> {
+
 	const {
 		githubRepoOwner,
 		githubRepoName,
 		githubFilePath,
 		githubCommitMessage,
 		githubBranchName,
-		githubToken,
-	} = env;
+	} = cfg.github!;
+	const githubToken=cfg.githubToken;
 
 	// Create the Octokit client once
 	const githubClient = createGitHubClient(githubToken);

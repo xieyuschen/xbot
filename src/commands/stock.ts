@@ -23,9 +23,10 @@ export const stockCommand: Command = {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: Config
+		cfg: Config
 	) {
-		const shareList = messageText === '' ? env.stockSymbols : messageText;
+		guardEmpty(cfg.fmpAPIKey, 'FMP_API_KEY', 'env');
+		const shareList = messageText === '' ? cfg.stockSymbols : messageText;
 		const symbolsToFetch = shareList
 			.split(';')
 			.map((s) => s.trim().toUpperCase())
@@ -46,7 +47,7 @@ export const stockCommand: Command = {
 			// Loop through each symbol and fetch its data
 			for (const symbol of symbolsToFetch) {
 				try {
-					const quote = await getStockQuote(env, symbol);
+					const quote = await getStockQuote(cfg, symbol);
 					if (quote) {
 						fetchedQuotes.push(quote);
 					} else {
@@ -129,3 +130,7 @@ const stockSubAddCommand: Command = {
 		return new Response('OK', { status: 200 });
 	},
 };
+function guardEmpty(fmpAPIKey: string, arg1: string, arg2: string) {
+	throw new Error('Function not implemented.');
+}
+
