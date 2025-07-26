@@ -1,3 +1,4 @@
+import { Next } from '.';
 import { Command } from '../types';
 import { Config } from '../utils/config';
 import {
@@ -7,7 +8,14 @@ import {
 } from '../utils/stocks';
 import { sendTelegramMessage } from '../utils/telegram';
 
-const stockCommand: Command = {
+export function createStockCommand(): Next {
+	return {
+		command: stockCommand,
+		next: new Map([['add', { command: stockSubAddCommand }]]),
+	};
+}
+
+export const stockCommand: Command = {
 	name: 'stock',
 	description: 'Get interested stock information',
 	requiresInput: true,
@@ -17,35 +25,6 @@ const stockCommand: Command = {
 		telegramApiUrl: string,
 		env: Config
 	) {
-		// todo: support subcommand framework in existing framework.
-		if (messageText.trim().toLowerCase().startsWith('add')) {
-			const symbolToAdd = messageText.replace(/^add\s+/i, '').trim().toUpperCase();
-			if (!symbolToAdd) {
-				await sendTelegramMessage(
-					telegramApiUrl,
-					chatId,
-					'Please provide a stock symbol to add. E.g., `/stock add AAPL`'
-				);
-				return new Response('OK', { status: 200 });
-			}
-
-			if (!env.stockSymbols.includes(symbolToAdd)) {
-				await env.KV_BINDING.put('STOCK_SYMBOLS', [env.stockSymbols, symbolToAdd].join(';'));
-				await sendTelegramMessage(
-					telegramApiUrl,
-					chatId,
-					`Symbol ${symbolToAdd} added to your watchlist.`
-				);
-			} else {
-				await sendTelegramMessage(
-					telegramApiUrl,
-					chatId,
-					`Symbol ${symbolToAdd} is already in your watchlist.`
-				);
-			}
-			return new Response('OK', { status: 200 });
-		}
-
 		const shareList = messageText === '' ? env.stockSymbols : messageText;
 		const symbolsToFetch = shareList
 			.split(';')
@@ -107,4 +86,46 @@ const stockCommand: Command = {
 	},
 };
 
-export default stockCommand;
+const stockSubAddCommand: Command = {
+	name: 'stock',
+	description: 'Add interested stock',
+	requiresInput: true,
+	async execute(
+		chatId: number,
+		messageText: string,
+		telegramApiUrl: string,
+		env: Config
+	) {
+		const symbolToAdd = messageText
+			.replace(/^add\s+/i, '')
+			.trim()
+			.toUpperCase();
+		if (!symbolToAdd) {
+			await sendTelegramMessage(
+				telegramApiUrl,
+				chatId,
+				'Please provide a stock symbol to add. E.g., `/stock add AAPL`'
+			);
+			return new Response('OK', { status: 200 });
+		}
+
+		if (!env.stockSymbols.includes(symbolToAdd)) {
+			await env.KV_BINDING.put(
+				'STOCK_SYMBOLS',
+				[env.stockSymbols, symbolToAdd].join(';')
+			);
+			await sendTelegramMessage(
+				telegramApiUrl,
+				chatId,
+				`Symbol ${symbolToAdd} added to your watchlist.`
+			);
+		} else {
+			await sendTelegramMessage(
+				telegramApiUrl,
+				chatId,
+				`Symbol ${symbolToAdd} is already in your watchlist.`
+			);
+		}
+		return new Response('OK', { status: 200 });
+	},
+};

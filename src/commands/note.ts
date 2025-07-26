@@ -1,9 +1,16 @@
 // src/commands/echo.ts
 
+import { Next } from '.';
 import { Command, TelegramUpdate } from '../types';
 import { Config } from '../utils/config';
 import { addContentToGitHubFile } from '../utils/github';
 import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
+
+export function createNoteCommand(): Next {
+	return {
+		command: noteCommand,
+	};
+}
 
 const noteCommand: Command = {
 	name: 'note',

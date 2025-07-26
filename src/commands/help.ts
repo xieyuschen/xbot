@@ -2,17 +2,20 @@
 
 import { Command } from '../types';
 import { sendTelegramMessage } from '../utils/telegram';
-import { getAllCommands } from './index';
+import { Next, topCommands } from './index';
 
-/**
- * Handles the /help command.
- */
+export function createHelpCommand(): Next {
+	return {
+		command: helpCommand,
+	};
+}
+
 const helpCommand: Command = {
 	name: 'help',
 	description: 'Shows available commands and their descriptions.',
 	requiresInput: false,
 	async execute(chatId, _, telegramApiUrl) {
-		const allCommands = getAllCommands();
+		const allCommands = topCommands();
 
 		let responseText = 'Here are the available commands:\n\n';
 		responseText += allCommands
