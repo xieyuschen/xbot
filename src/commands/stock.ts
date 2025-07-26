@@ -1,6 +1,6 @@
 import { Next } from '.';
 import { Command } from '../types';
-import { Config } from '../utils/config';
+import { Config, guardEmpty } from '../utils/config';
 import {
 	FmpQuote,
 	formatStockDataForTelegram,
@@ -130,7 +130,3 @@ const stockSubAddCommand: Command = {
 		return new Response('OK', { status: 200 });
 	},
 };
-function guardEmpty(fmpAPIKey: string, arg1: string, arg2: string) {
-	throw new Error('Function not implemented.');
-}
-
