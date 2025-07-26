@@ -38,7 +38,7 @@ export interface GithubConfig {
  * @param {string | null} value - The value to check.
  * @param {string} name - The name of the variable for error reporting.
  */
-function guardEmpty(
+export function guardEmpty(
 	value: string | null,
 	name: string,
 	source: string

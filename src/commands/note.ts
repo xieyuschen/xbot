@@ -2,7 +2,7 @@
 
 import { Next } from '.';
 import { Command, TelegramUpdate } from '../types';
-import { Config, newGithubScret } from '../utils/config';
+import { Config, guardEmpty, newGithubScret } from '../utils/config';
 import { addContentToGitHubFile } from '../utils/github';
 import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
 
@@ -52,7 +52,4 @@ const noteCommand: Command = {
 };
 
 export default noteCommand;
-function guardEmpty(githubToken: string, arg1: string, arg2: string) {
-	throw new Error('Function not implemented.');
-}
 
