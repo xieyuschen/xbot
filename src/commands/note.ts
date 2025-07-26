@@ -2,7 +2,7 @@
 
 import { Next } from '.';
 import { Command, TelegramUpdate } from '../types';
-import { Config } from '../utils/config';
+import { Config, newGithubScret } from '../utils/config';
 import { addContentToGitHubFile } from '../utils/github';
 import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
 
@@ -20,16 +20,18 @@ const noteCommand: Command = {
 		chatId: number,
 		messageText: string,
 		telegramApiUrl: string,
-		env: Config,
+		cfg: Config,
 		update: TelegramUpdate
 	) {
 		if (messageText === '') {
 			return new Response('OK', { status: 200 });
 		}
 		try {
-			// Attempt to add content to the GitHub file
-			await addContentToGitHubFile(messageText, env);
+			cfg.github = await newGithubScret(cfg.KV_BINDING);
+			guardEmpty(cfg.githubToken, 'GITHUB_TOKEN', 'env');
 
+			// Attempt to add content to the GitHub file
+			await addContentToGitHubFile(messageText, cfg);
 			const messageId = update.message?.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
@@ -50,3 +52,7 @@ const noteCommand: Command = {
 };
 
 export default noteCommand;
+function guardEmpty(githubToken: string, arg1: string, arg2: string) {
+	throw new Error('Function not implemented.');
+}
+
