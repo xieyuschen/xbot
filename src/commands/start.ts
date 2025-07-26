@@ -1,12 +1,15 @@
 // src/commands/start.ts
 
+import { Next } from '.';
 import { Command } from '../types';
-import { Config } from '../utils/config';
 import { sendTelegramMessage } from '../utils/telegram';
 
-/**
- * Handles the /start command.
- */
+export function createStartCommand(): Next {
+	return {
+		command: startCommand,
+	};
+}
+
 const startCommand: Command = {
 	name: 'start',
 	requiresInput: false,

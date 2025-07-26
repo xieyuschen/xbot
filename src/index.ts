@@ -4,11 +4,12 @@ import { Env, TelegramUpdate } from './types';
 import { getCommand } from './commands';
 import { sendTelegramMessage } from './utils/telegram';
 import { initConfig, Config } from './utils/config';
-import noteCommand from './commands/note';
-import stockCommand from './commands/stock';
+
+// todo: why after removing export default stockCommand, i need use {} to quote it?
+import { stockCommand } from './commands/stock';
 
 export default {
-		async scheduled(
+	async scheduled(
 		controller: ScheduledController,
 		env: Env,
 		ctx: ExecutionContext
@@ -125,24 +126,15 @@ async function handleTelegramUpdate(
 		await cfg.KV_BINDING.put('CHAT_ID', chatId.toString());
 	}
 
+	let arr: string[] = [];
+	let msgText = messageText;
 	if (messageText.startsWith('/')) {
 		const parts = messageText.split(' ');
-		const commandName = parts[0].toLowerCase().substring(1);
-
-		const commandHandler = getCommand(commandName);
-
-		if (commandHandler) {
-			const msgText = messageText.replace(`/${commandName}`, '').trim();
-			return commandHandler.execute(
-				chatId,
-				msgText,
-				telegramApiUrl,
-				cfg,
-				update
-			);
-		}
+		const start = parts[0].toLowerCase();
+		arr = parts.slice(1);
+		arr.unshift(start.substring(1));
+		msgText = messageText.replace(`${start}`, '').trim();
 	}
 
-	// note down the things we want.
-	return noteCommand.execute(chatId, messageText, telegramApiUrl, cfg, update);
+	return getCommand(arr).execute(chatId, msgText, telegramApiUrl, cfg, update);
 }
