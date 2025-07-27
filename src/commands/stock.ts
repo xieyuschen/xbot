@@ -11,7 +11,11 @@ import { sendTelegramMessage } from '../utils/telegram';
 export function createStockCommand(): Next {
 	return {
 		command: stockCommand,
-		next: new Map([['add', { command: stockSubAddCommand }]]),
+		next: new Map([
+			['add', { command: addCommand }],
+			['list', { command: listCommand }],
+			['remove', { command: removeCommand }],
+		]),
 	};
 }
 
@@ -87,9 +91,9 @@ export const stockCommand: Command = {
 	},
 };
 
-const stockSubAddCommand: Command = {
-	name: 'stock',
-	description: 'Add interested stock',
+const addCommand: Command = {
+	name: 'add',
+	description: 'Add an interested stock',
 	requiresInput: true,
 	async execute(
 		chatId: number,
@@ -97,11 +101,11 @@ const stockSubAddCommand: Command = {
 		telegramApiUrl: string,
 		env: Config
 	) {
-		const symbolToAdd = messageText
+		const input = messageText
 			.replace(/^add\s+/i, '')
 			.trim()
 			.toUpperCase();
-		if (!symbolToAdd) {
+		if (!input) {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
@@ -110,21 +114,74 @@ const stockSubAddCommand: Command = {
 			return new Response('OK', { status: 200 });
 		}
 
-		if (!env.stockSymbols.includes(symbolToAdd)) {
-			await env.KV_BINDING.put(
-				'STOCK_SYMBOLS',
-				[env.stockSymbols, symbolToAdd].join(';')
-			);
+		const symbols = input.split(';');
+		const nstock = Array.from(
+			new Set([...env.stockSymbols.split(';'), ...symbols])
+		);
+
+		await env.KV_BINDING.put('STOCK_SYMBOLS', nstock.join(';'));
+		await sendTelegramMessage(
+			telegramApiUrl,
+			chatId,
+			`Symbol ${input} added to your watchlist.`
+		);
+		return new Response('OK', { status: 200 });
+	},
+};
+
+const listCommand: Command = {
+	name: 'list',
+	description: 'List all watched stocks',
+	requiresInput: false,
+	async execute(
+		chatId: number,
+		messageText: string,
+		telegramApiUrl: string,
+		env: Config
+	) {
+		const symbols = await env.KV_BINDING.get('STOCK_SYMBOLS');
+
+		await sendTelegramMessage(
+			telegramApiUrl,
+			chatId,
+			`Symbols ${symbols} are watching now.`
+		);
+		return new Response('OK', { status: 200 });
+	},
+};
+
+const removeCommand: Command = {
+	name: 'remove',
+	description:
+		'Remove symbols from watchlist. Multiple stocks should be separated by ;',
+	requiresInput: true,
+	async execute(
+		chatId: number,
+		messageText: string,
+		telegramApiUrl: string,
+		env: Config
+	) {
+		const input = messageText
+			.replace(/^remove\s+/i, '')
+			.trim()
+			.toUpperCase();
+		if (!input) {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				`Symbol ${symbolToAdd} added to your watchlist.`
+				'Please provide a stock symbol to remove. E.g., `/stock remove AAPL`'
 			);
-		} else {
+			return new Response('OK', { status: 200 });
+		}
+		let symbolsToRemove = input.split(';');
+		const old = env.stockSymbols.split(';');
+		let nstocks = old.filter((item) => !symbolsToRemove.includes(item));
+		if (old.length !== nstocks.length) {
+			await env.KV_BINDING.put('STOCK_SYMBOLS', nstocks.join(';'));
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				`Symbol ${symbolToAdd} is already in your watchlist.`
+				`Symbol ${symbolsToRemove} are removed from your watchlist.`
 			);
 		}
 		return new Response('OK', { status: 200 });

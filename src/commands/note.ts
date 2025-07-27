@@ -52,4 +52,3 @@ const noteCommand: Command = {
 };
 
 export default noteCommand;
-

@@ -58,10 +58,8 @@ export async function initConfig(env: Env): Promise<Config> {
 		throw new Error('ALLOWED_USER_ID must be a valid number');
 	}
 
-
 	const stockSymbols = await kv.get('STOCK_SYMBOLS');
 	const symbol = stockSymbols === null ? '' : stockSymbols;
-
 
 	guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
 
@@ -109,5 +107,5 @@ export async function newGithubScret(kv: KVNamespace): Promise<GithubConfig> {
 		githubFilePath: githubFilePath,
 		githubCommitMessage: githubCommitMessage,
 		githubBranchName: githubBranchName,
-	}
+	};
 }
