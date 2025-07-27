@@ -226,7 +226,6 @@ export async function addContentToGitHubFile(
 	newContent: string,
 	cfg: Config
 ): Promise<void> {
-
 	const {
 		githubRepoOwner,
 		githubRepoName,
@@ -234,7 +233,7 @@ export async function addContentToGitHubFile(
 		githubCommitMessage,
 		githubBranchName,
 	} = cfg.github!;
-	const githubToken=cfg.githubToken;
+	const githubToken = cfg.githubToken;
 
 	// Create the Octokit client once
 	const githubClient = createGitHubClient(githubToken);

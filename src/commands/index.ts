@@ -26,19 +26,27 @@ const commandsMap: Map<string, Next> = new Map([
 export function getCommand(names: string[]): Command {
 	let cmd = commandsMap.get('note')!.command; // use note command if no command is found.
 	let m: Map<string, Next> | undefined = commandsMap;
+
+	let trace: string[] = [];
 	for (const name of names) {
 		if (m === undefined || !m.has(name)) {
 			break; // stop when we no longer can find a name for this name.
 		}
-		cmd = commandsMap.get(name)!.command;
-		m = commandsMap.get(name)!.next;
+		trace.push(name);
+		cmd = m.get(name)!.command;
+		m = m.get(name)!.next;
 	}
+	console.log(
+		"found command '%s' from input '%s'",
+		trace.join(' '),
+		names.join(' ')
+	);
 	return cmd!;
 }
 
 export function topCommands(): Command[] {
-  return [...commandsMap.values()]
-    .filter((cmd): cmd is Next & { command: Command } => cmd.command != null) // Type guard for cmd.command
-    .filter((cmd) => cmd.command.name !== 'help') // Exclude commands with name 'help'
-    .map((cmd) => cmd.command); // Extract the Command object
+	return [...commandsMap.values()]
+		.filter((cmd): cmd is Next & { command: Command } => cmd.command != null) // Type guard for cmd.command
+		.filter((cmd) => cmd.command.name !== 'help') // Exclude commands with name 'help'
+		.map((cmd) => cmd.command); // Extract the Command object
 }
