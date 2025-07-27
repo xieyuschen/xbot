@@ -5,6 +5,7 @@ import { createStartCommand } from './start';
 import { createHelpCommand } from './help';
 import { createNoteCommand } from './note';
 import { createStockCommand } from './stock';
+import { createForexCommand } from './forex';
 
 export interface Next {
 	command?: Command;
@@ -16,6 +17,7 @@ const commandsMap: Map<string, Next> = new Map([
 	['help', createHelpCommand()],
 	['note', createNoteCommand()],
 	['stock', createStockCommand()],
+	['forex', createForexCommand()],
 ]);
 
 /**
