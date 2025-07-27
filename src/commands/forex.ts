@@ -4,9 +4,10 @@ import { Config, guardEmpty } from '../utils/config';
 import { FmpQuote, formatFmpDataForTelegram, getQuote } from '../utils/fmp';
 import { sendTelegramMessage } from '../utils/telegram';
 
-export function createStockCommand(): Next {
+// todo: forex and stock logic are exactly the same, try to unify them.
+export function createForexCommand(): Next {
 	return {
-		command: stockCommand,
+		command: forexCommand,
 		next: new Map([
 			['add', { command: addCommand }],
 			['list', { command: listCommand }],
@@ -15,9 +16,9 @@ export function createStockCommand(): Next {
 	};
 }
 
-export const stockCommand: Command = {
-	name: 'stock',
-	description: 'Get interested stock information',
+export const forexCommand: Command = {
+	name: 'forex',
+	description: 'Get interested forex information',
 	requiresInput: true,
 	async execute(
 		chatId: number,
@@ -26,7 +27,7 @@ export const stockCommand: Command = {
 		cfg: Config
 	) {
 		guardEmpty(cfg.fmpAPIKey, 'FMP_API_KEY', 'env');
-		const shareList = messageText === '' ? cfg.stockSymbols : messageText;
+		const shareList = messageText === '' ? cfg.forexSymbols : messageText;
 		const symbolsToFetch = shareList
 			.split(';')
 			.map((s) => s.trim().toUpperCase())
@@ -36,7 +37,7 @@ export const stockCommand: Command = {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				'No valid stock symbols provided. E.g., `/stock AAPL`'
+				'No valid forex symbols provided. E.g., `/forex SGDUSD`'
 			);
 			return new Response('OK', { status: 200 });
 		}
@@ -71,15 +72,15 @@ export const stockCommand: Command = {
 				await sendTelegramMessage(
 					telegramApiUrl,
 					chatId,
-					'No stock information could be retrieved for the provided symbols.'
+					'No forex information information could be retrieved for the provided symbols.'
 				);
 			}
 			return new Response('OK', { status: 200 }); // Always return 200 OK to Telegram
 		} catch (error: any) {
 			// This catch block handles errors from the overall execution, not just individual symbol fetches
-			console.error('Error occurred while fetching stock info:', error);
+			console.error('Error occurred while fetching forex info:', error);
 
-			const errorMessage = `Failed to get stock information. Please try again later. (Error: ${error.message || 'Unknown error'})`;
+			const errorMessage = `Failed to get forex information. Please try again later. (Error: ${error.message || 'Unknown error'})`;
 
 			await sendTelegramMessage(telegramApiUrl, chatId, errorMessage);
 			return new Response('Internal Server Error', { status: 200 }); // Return 200 to Telegram
@@ -89,7 +90,7 @@ export const stockCommand: Command = {
 
 const addCommand: Command = {
 	name: 'add',
-	description: 'Add an interested stock',
+	description: 'Add an interested forex',
 	requiresInput: true,
 	async execute(
 		chatId: number,
@@ -105,21 +106,21 @@ const addCommand: Command = {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				'Please provide a stock symbol to add. E.g., `/stock add AAPL`'
+				'Please provide a forex symbol to add. E.g., `/forex add SGDUSD`'
 			);
 			return new Response('OK', { status: 200 });
 		}
 
 		const symbols = input.split(';');
-		const nstock = Array.from(
-			new Set([...env.stockSymbols.split(';'), ...symbols])
+		const nforex = Array.from(
+			new Set([...env.forexSymbols.split(';'), ...symbols])
 		);
 
-		await env.KV_BINDING.put('STOCK_SYMBOLS', nstock.join(';'));
+		await env.KV_BINDING.put('FOREX_SYMBOLS', nforex.join(';'));
 		await sendTelegramMessage(
 			telegramApiUrl,
 			chatId,
-			`Symbol ${input} added to your watchlist.`
+			`Forex symbol ${input} added to your watchlist.`
 		);
 		return new Response('OK', { status: 200 });
 	},
@@ -127,7 +128,7 @@ const addCommand: Command = {
 
 const listCommand: Command = {
 	name: 'list',
-	description: 'List all watched stocks',
+	description: 'List all watched forex',
 	requiresInput: false,
 	async execute(
 		chatId: number,
@@ -135,12 +136,12 @@ const listCommand: Command = {
 		telegramApiUrl: string,
 		env: Config
 	) {
-		const symbols = await env.KV_BINDING.get('STOCK_SYMBOLS');
+		const symbols = await env.KV_BINDING.get('FOREX_SYMBOLS');
 
 		await sendTelegramMessage(
 			telegramApiUrl,
 			chatId,
-			`Symbols ${symbols} are watching now.`
+			`Forex symbols ${symbols} are watching now.`
 		);
 		return new Response('OK', { status: 200 });
 	},
@@ -149,7 +150,7 @@ const listCommand: Command = {
 const removeCommand: Command = {
 	name: 'remove',
 	description:
-		'Remove symbols from watchlist. Multiple stocks should be separated by ;',
+		'Remove forex symbols from watchlist. Multiple forex should be separated by ;',
 	requiresInput: true,
 	async execute(
 		chatId: number,
@@ -165,19 +166,19 @@ const removeCommand: Command = {
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				'Please provide a stock symbol to remove. E.g., `/stock remove AAPL`'
+				'Please provide a forex symbol to remove. E.g., `/forex remove AAPL`'
 			);
 			return new Response('OK', { status: 200 });
 		}
 		let symbolsToRemove = input.split(';');
-		const old = env.stockSymbols.split(';');
-		let nstocks = old.filter((item) => !symbolsToRemove.includes(item));
-		if (old.length !== nstocks.length) {
-			await env.KV_BINDING.put('STOCK_SYMBOLS', nstocks.join(';'));
+		const old = env.forexSymbols.split(';');
+		let nforex = old.filter((item) => !symbolsToRemove.includes(item));
+		if (old.length !== nforex.length) {
+			await env.KV_BINDING.put('FOREX_SYMBOLS', nforex.join(';'));
 			await sendTelegramMessage(
 				telegramApiUrl,
 				chatId,
-				`Symbol ${symbolsToRemove} are removed from your watchlist.`
+				`Symbol ${symbolsToRemove} are removed from your forex watchlist.`
 			);
 		}
 		return new Response('OK', { status: 200 });

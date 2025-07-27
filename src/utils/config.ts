@@ -21,6 +21,7 @@ export interface Config extends Secrets {
 	github: GithubConfig | undefined;
 	allowedUserId: number;
 	stockSymbols: string;
+	forexSymbols: string;
 	KV_BINDING: KVNamespace;
 }
 
@@ -60,6 +61,8 @@ export async function initConfig(env: Env): Promise<Config> {
 
 	const stockSymbols = await kv.get('STOCK_SYMBOLS');
 	const symbol = stockSymbols === null ? '' : stockSymbols;
+	const forex = await kv.get('FOREX_SYMBOLS');
+	const forexes = forex === null ? '' : forex;
 
 	guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
 
@@ -69,6 +72,7 @@ export async function initConfig(env: Env): Promise<Config> {
 		KV_BINDING: kv,
 		allowedUserId: parseInt(allowedUserId, 10),
 		stockSymbols: symbol,
+		forexSymbols: forexes,
 	};
 }
 

@@ -15,7 +15,7 @@ export interface FmpQuote {
 	marketCap: number;
 }
 
-export async function getStockQuote(
+export async function getQuote(
 	env: Config,
 	symbol: string
 ): Promise<FmpQuote | null> {
@@ -52,7 +52,7 @@ export async function getStockQuote(
  * @param data An array of FmpQuote objects from the Financial Modeling Prep API.
  * @returns A formatted string suitable for Telegram.
  */
-export function formatStockDataForTelegram(data: FmpQuote[]): string {
+export function formatFmpDataForTelegram(data: FmpQuote[]): string {
 	if (!data || data.length === 0) {
 		return 'No stock data available or fetched.';
 	}
