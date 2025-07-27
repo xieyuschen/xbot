@@ -30,7 +30,7 @@ export default {
 		}
 		const update: TelegramUpdate = {};
 
-		stockCommand
+		await getCommand(['stock'])
 			.execute(
 				Number(chatId),
 				cfg.stockSymbols,
@@ -44,6 +44,24 @@ export default {
 			.catch((error: any) => {
 				console.error(
 					'Error executing scheduled stock command:',
+					error.message
+				);
+			});
+
+		await getCommand(['forex'])
+			.execute(
+				Number(chatId),
+				cfg.forexSymbols,
+				`https://api.telegram.org/bot${cfg.telegramBotToken}`,
+				cfg,
+				update
+			)
+			.then(() => {
+				console.log('Scheduled forex command executed successfully');
+			})
+			.catch((error: any) => {
+				console.error(
+					'Error executing scheduled forex command:',
 					error.message
 				);
 			});
