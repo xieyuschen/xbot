@@ -52,13 +52,16 @@ export async function getQuote(
  * @param data An array of FmpQuote objects from the Financial Modeling Prep API.
  * @returns A formatted string suitable for Telegram.
  */
-export function formatFmpDataForTelegram(data: FmpQuote[]): string {
+export function formatFmpDataForTelegram(
+	description: string,
+	data: FmpQuote[]
+): string {
 	if (!data || data.length === 0) {
 		return 'No stock data available or fetched.';
 	}
 
 	let messageParts: string[] = [];
-	messageParts.push('*Daily Stock Update:*');
+	messageParts.push(`*${description}:*`);
 	messageParts.push('`---------------------------`'); // Visual separator
 
 	data.forEach((stock) => {

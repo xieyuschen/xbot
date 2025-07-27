@@ -62,7 +62,7 @@ export const stockCommand: Command = {
 			let info = '';
 			if (fetchedQuotes.length > 0) {
 				// Format the collected data for Telegram
-				info = formatFmpDataForTelegram(fetchedQuotes);
+				info = formatFmpDataForTelegram('Daily Stock Update', fetchedQuotes);
 				await sendTelegramMessage(telegramApiUrl, chatId, info, 'MarkdownV2');
 			}
 
