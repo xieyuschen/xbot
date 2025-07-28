@@ -64,30 +64,37 @@ export function formatFmpDataForTelegram(
 	messageParts.push(`*${description}:*`);
 	messageParts.push('`---------------------------`'); // Visual separator
 
-	data.forEach((stock) => {
-		const sign = stock.change >= 0 ? '🟢' : '🔴';
-		const changeStr = escapeMarkdownV2(stock.change.toFixed(2));
-		const percentageStr = escapeMarkdownV2(stock.changesPercentage.toFixed(2));
+	data.forEach((item) => {
+		const sign = item.change >= 0 ? '🟢' : '🔴';
+		const changeStr = escapeMarkdownV2(item.change.toFixed(2));
+		const percentageStr = escapeMarkdownV2(item.changesPercentage.toFixed(2));
 
 		// Escape all potentially problematic characters in the raw data values
-		const escapedName = escapeMarkdownV2(stock.name);
-		const escapedSymbol = escapeMarkdownV2(stock.symbol);
-		const escapedPrice = escapeMarkdownV2(stock.price.toFixed(2));
-		const escapedDayLow = escapeMarkdownV2(stock.dayLow.toFixed(2));
-		const escapedDayHigh = escapeMarkdownV2(stock.dayHigh.toFixed(2));
-		const escapedMarketCap = escapeMarkdownV2(
-			(stock.marketCap / 1_000_000_000).toFixed(2)
-		); // Convert to billions
+		const escapedName = escapeMarkdownV2(item.name);
+		const escapedSymbol = escapeMarkdownV2(item.symbol);
+		const escapedPrice = escapeMarkdownV2(item.price.toFixed(2));
 
 		// Add stock data to the message
 		messageParts.push(`*${escapedName}* \\(${escapedSymbol}\\)`); // Escaped parentheses
 		messageParts.push(
 			`  Price: \`${escapedPrice}\` ${sign} \\(${changeStr}, ${percentageStr}\\%\\)`
 		); // Escaped parentheses and percentage sign
-		messageParts.push(
-			`  Day Range: \`${escapedDayLow}\` \\- \`${escapedDayHigh}\``
-		); // Escaped dash
-		messageParts.push(`  Market Cap: \`${escapedMarketCap}B\``);
+
+		// for forex, it doesn't have market cap.
+		if (item.marketCap != 0) {
+			// the low and high only make sense for stocks/ETFs with market cap.
+			const escapedDayLow = escapeMarkdownV2(item.dayLow.toFixed(2));
+			const escapedDayHigh = escapeMarkdownV2(item.dayHigh.toFixed(2));
+			messageParts.push(
+				`  Day Range: \`${escapedDayLow}\` \\- \`${escapedDayHigh}\``
+			); // Escaped dash
+
+			const escapedMarketCap = escapeMarkdownV2(
+				(item.marketCap / 1_000_000_000).toFixed(2)
+			); // Convert to billions
+			messageParts.push(`  Market Cap: \`${escapedMarketCap}B\``);
+		}
+
 		messageParts.push(''); // Empty line for spacing between stocks
 	});
 
