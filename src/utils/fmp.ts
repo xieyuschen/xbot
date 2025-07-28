@@ -81,7 +81,7 @@ export function formatFmpDataForTelegram(
 		); // Escaped parentheses and percentage sign
 
 		// for forex, it doesn't have market cap.
-		if (item.marketCap != 0) {
+		if (item.marketCap != null && item.marketCap != 0) {
 			// the low and high only make sense for stocks/ETFs with market cap.
 			const escapedDayLow = escapeMarkdownV2(item.dayLow.toFixed(2));
 			const escapedDayHigh = escapeMarkdownV2(item.dayHigh.toFixed(2));

@@ -22,10 +22,10 @@ const llmCOmmand: Command = {
 		update: TelegramUpdate
 	) {
 		guardEmpty(cfg.openaiApiKey, 'OPEN_AI_API_KEY', 'env');
-		if (!cfg.gptModel){
+		if (!cfg.gptModel) {
 			cfg.gptModel = 'gpt-4o-mini';
 		}
-		
+
 		const gptRequest: ChatGPTRequest = {
 			model: cfg.gptModel,
 			messages: [{ role: 'user', content: messageText }],
