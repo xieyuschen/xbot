@@ -5,9 +5,6 @@ import { getCommand } from './commands';
 import { sendTelegramMessage } from './utils/telegram';
 import { initConfig, Config } from './utils/config';
 
-// todo: why after removing export default stockCommand, i need use {} to quote it?
-import { stockCommand } from './commands/stock';
-
 export default {
 	async scheduled(
 		controller: ScheduledController,

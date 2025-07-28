@@ -11,6 +11,7 @@ export interface Secrets {
 	telegramSecretToken: string;
 	githubToken: string;
 	fmpAPIKey: string;
+	openaiApiKey: string;
 }
 
 /**
@@ -18,7 +19,8 @@ export interface Secrets {
  * This interface is used to ensure that all required environment variables are present and correctly typed.
  */
 export interface Config extends Secrets {
-	github: GithubConfig | undefined;
+	github: GithubConfig | null;
+	gptModel: string | null;
 	allowedUserId: number;
 	stockSymbols: string;
 	forexSymbols: string;
@@ -65,10 +67,12 @@ export async function initConfig(env: Env): Promise<Config> {
 	const forexes = forex === null ? '' : forex;
 
 	guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
+	const gptmodel = await kv.get('GPT_MODEL');
 
 	return {
 		...secrets,
-		github: undefined,
+		github: null,
+		gptModel: gptmodel,
 		KV_BINDING: kv,
 		allowedUserId: parseInt(allowedUserId, 10),
 		stockSymbols: symbol,
@@ -91,6 +95,7 @@ function newSecret(env: Env): Secrets {
 		telegramSecretToken: env.TELEGRAM_SECRET_TOKEN,
 		githubToken: env.GITHUB_TOKEN,
 		fmpAPIKey: env.FMP_API_KEY,
+		openaiApiKey: env.OPEN_AI_API_KEY,
 	};
 }
 
