@@ -21,7 +21,7 @@
 		"@cloudflare/workers-types": "^4.20240718.0",
 		"@octokit/rest": "^20.1.1",
 		"@types/jest": "^30.0.0",
-		"@types/node": "^24.0.15",
+		"@types/node": "^24.1.0",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
 		"eslint": "^9.31.0",
@@ -30,10 +30,12 @@
 		"jest": "^30.0.4",
 		"prettier": "^3.6.2",
 		"ts-jest": "^29.4.0",
-		"typescript": "^5.5.3",
+		"typescript": "^5.8.3",
 		"wrangler": "^4.25.0"
 	},
 	"dependencies": {
-		"buffer": "^6.0.3"
+		"buffer": "^6.0.3",
+		"dotenv": "^17.2.1",
+		"openai": "^5.10.2"
 	}
 }

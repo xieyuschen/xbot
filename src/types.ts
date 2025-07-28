@@ -11,6 +11,7 @@ export interface Env {
 	TELEGRAM_SECRET_TOKEN: string; // Used to verify requests from Telegram
 	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
 	FMP_API_KEY: string;
+	OPEN_AI_API_KEY: string; // OpenAI API key for GPT commands
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
 }
 
