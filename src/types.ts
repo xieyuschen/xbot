@@ -11,6 +11,10 @@ export interface TypedEnv {
 	FMP_API_KEY: string;
 	OPEN_AI_API_KEY: string; // OpenAI API key for GPT commands
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
+
+	RAG_DB: D1Database;
+	Vector_Index: VectorizeIndex;
+	RAG_WORKFLOW: Workflow;
 }
 
 /**

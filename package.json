@@ -40,6 +40,8 @@
 	},
 	"dependencies": {
 		"buffer": "^6.0.3",
+		"cloudflare": "^4.5.0",
+		"cloudflare-worker": "^1.0.0",
 		"dotenv": "^17.2.1",
 		"openai": "^5.10.2"
 	}

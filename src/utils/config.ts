@@ -18,7 +18,7 @@ export interface Secrets {
  */
 export interface Config extends Secrets {
 	github: GithubConfig | null;
-	gptModel: string | null;
+	gptModel: string;
 	allowedUserId: number;
 	stockSymbols: string;
 	forexSymbols: string;
@@ -78,7 +78,7 @@ export class Common {
 		this.cfg = {
 			...this.secrets,
 			github: null,
-			gptModel: gptmodel,
+			gptModel: gptmodel ?? '',
 			KV_BINDING: kv,
 			allowedUserId: parseInt(allowedUserId, 10),
 			stockSymbols: symbol,

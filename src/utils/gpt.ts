@@ -7,12 +7,27 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'; 
  */
 export interface ChatGPTRequest {
 	model: string; // e.g., "gpt-4o", "gpt-3.5-turbo"
-	messages: ChatCompletionMessageParam[]; // Array of message objects (role, content)
+	messages?: ChatCompletionMessageParam[]; // Array of message objects (role, content)
+	input?: string | string[]; // For embeddings
 	stream?: boolean; // Optional: whether to stream the response
 }
 
 export const GPT_4O_MINI = 'gpt-4o-mini';
 export const TEXT_EMBEDDING = 'text-embedding-ada-002';
+
+interface EmbeddingResponse {
+	object: 'list';
+	data: Array<{
+		object: 'embedding';
+		embedding: number[]; // Array of 1536 floats
+		index: number;
+	}>;
+	model: string;
+	usage: {
+		prompt_tokens: number;
+		total_tokens: number;
+	};
+}
 
 export class OpenAIClient {
 	apiKey: string;
@@ -31,7 +46,7 @@ export class OpenAIClient {
 				// Handle streaming responses
 				const stream = await this.openai.chat.completions.create({
 					model: request.model,
-					messages: request.messages,
+					messages: request.messages!,
 					stream: true,
 				});
 
@@ -45,7 +60,7 @@ export class OpenAIClient {
 				// Handle non-streaming responses
 				const chatCompletion = await this.openai.chat.completions.create({
 					model: request.model,
-					messages: request.messages,
+					messages: request.messages!,
 				});
 
 				// Return the content of the first choice
@@ -61,6 +76,45 @@ export class OpenAIClient {
 				console.error('Data:', error.response.data);
 			}
 			throw new Error(`Failed to get response from ChatGPT: ${error.message}`);
+		}
+	}
+
+	public async embedding(request: ChatGPTRequest): Promise<EmbeddingResponse> {
+		try {
+			if (!request.input) {
+				throw new Error('Embedding request must include "input".');
+			}
+
+			// Call the embeddings endpoint
+			const embeddingResponse = await this.openai.embeddings.create({
+				model: request.model, // Specify the embedding model, e.g., "text-embedding-ada-002"
+				input: request.input!, // The text or array of texts to embed
+			}).catch((error: any) => {
+				console.error('Error in OpenAI embeddings API:', error);
+				throw new Error(`Failed to fetch embedding: ${error.message}`);
+			});
+
+			// Return the response as an EmbeddingResponse type
+			return {
+				object: embeddingResponse.object,
+				data: embeddingResponse.data.map((item) => ({
+					object: item.object,
+					embedding: item.embedding, // Array of floats
+					index: item.index,
+				})),
+				model: embeddingResponse.model,
+				usage: {
+					prompt_tokens: embeddingResponse.usage.prompt_tokens,
+					total_tokens: embeddingResponse.usage.total_tokens,
+				},
+			};
+		} catch (error: any) {
+			console.error('Error calling OpenAI Embedding API:', error);
+			if (error.response) {
+				console.error('Status:', error.response.status);
+				console.error('Data:', error.response.data);
+			}
+			throw new Error(`Failed to fetch embedding: ${error.message}`);
 		}
 	}
 }
