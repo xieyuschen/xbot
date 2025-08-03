@@ -168,36 +168,32 @@ export function processFile(
 		const line = lines[i];
 		const matches = line.match(sectionRegex);
 
-		// Check if the line matches the section header format
-		if (matches) {
-			// If this is today's section
-			if (matches[1] === todayFormatted) {
-				foundTodaySection = true;
-				updatedLines.push(line); // Add the current section header
+		// Check if the line matches the section header format and this is today's section.
+		if (matches && matches[1] === todayFormatted) {
+			foundTodaySection = true;
+			updatedLines.push(line); // Add the current section header
 
-				// Copy all lines in today's section until the next section or end of file
-				let contentAdded = false;
-				for (let j = i + 1; j < lines.length; j++) {
-					if (sectionRegex.test(lines[j])) {
-						// Found next section header, insert new content before it
-						updatedLines.push(newContent);
-						updatedLines.push(''); // Add a blank line after new content for spacing
-						updatedLines.push(lines[j]); // Add the next section header
-						i = j; // Move main loop index to this line
-						contentAdded = true;
-						break;
-					}
-					updatedLines.push(lines[j]);
-				}
-
-				// If end of file is reached within today's section, append new content here
-				if (!contentAdded) {
+			// Copy all lines in today's section until the next section or end of file
+			let contentAdded = false;
+			for (let j = i + 1; j < lines.length; j++) {
+				if (sectionRegex.test(lines[j])) {
+					// Found next section header, insert new content before it
 					updatedLines.push(newContent);
 					updatedLines.push(''); // Add a blank line after new content for spacing
-					i = lines.length; // Move main loop index to end
+					i = j; // Move main loop index to this line
+					contentAdded = true;
+					break;
 				}
-				continue; // Continue to next iteration of outer while loop
+				updatedLines.push(lines[j]);
 			}
+
+			// If end of file is reached within today's section, append new content here
+			if (!contentAdded) {
+				updatedLines.push(newContent);
+				updatedLines.push(''); // Add a blank line after new content for spacing
+				i = lines.length; // Move main loop index to end
+			}
+			continue; // Continue to next iteration of outer while loop
 		}
 
 		// Copy all other lines as-is
