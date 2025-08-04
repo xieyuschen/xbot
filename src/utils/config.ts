@@ -1,6 +1,4 @@
-// src/utils/env.ts
-
-import { Env } from '../types';
+import { TypedEnv } from '../types';
 
 /**
  * Represents the secrets used in the application.
@@ -51,43 +49,59 @@ export function guardEmpty(
 	}
 }
 
-export async function initConfig(env: Env): Promise<Config> {
-	let secrets = newSecret(env);
-	let kv = env.KV_BINDING;
-
-	const allowedUserId = await kv.get('ALLOWED_USER_ID');
-	guardEmpty(allowedUserId, 'ALLOWED_USER_ID', 'kv namespace');
-	if (isNaN(parseInt(allowedUserId, 10))) {
-		throw new Error('ALLOWED_USER_ID must be a valid number');
+export class Common {
+	public env: TypedEnv;
+	private cfg: Config | null;
+	secrets: Secrets;
+	protected constructor(env: TypedEnv) {
+		this.env = env;
+		this.cfg = null;
+		this.secrets = newSecret(env);
 	}
 
-	const stockSymbols = await kv.get('STOCK_SYMBOLS');
-	const symbol = stockSymbols === null ? '' : stockSymbols;
-	const forex = await kv.get('FOREX_SYMBOLS');
-	const forexes = forex === null ? '' : forex;
+	protected async create() {
+		const kv = this.env.KV_BINDING;
 
-	guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
-	const gptmodel = await kv.get('GPT_MODEL');
+		const allowedUserId = await kv.get('ALLOWED_USER_ID');
+		guardEmpty(allowedUserId, 'ALLOWED_USER_ID', 'kv namespace');
+		if (isNaN(parseInt(allowedUserId, 10))) {
+			throw new Error('ALLOWED_USER_ID must be a valid number');
+		}
 
-	return {
-		...secrets,
-		github: null,
-		gptModel: gptmodel,
-		KV_BINDING: kv,
-		allowedUserId: parseInt(allowedUserId, 10),
-		stockSymbols: symbol,
-		forexSymbols: forexes,
-	};
+		const stockSymbols = await kv.get('STOCK_SYMBOLS');
+		const symbol = stockSymbols === null ? '' : stockSymbols;
+		const forex = await kv.get('FOREX_SYMBOLS');
+		const forexes = forex === null ? '' : forex;
+
+		guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
+		const gptmodel = await kv.get('GPT_MODEL');
+		this.cfg = {
+			...this.secrets,
+			github: null,
+			gptModel: gptmodel,
+			KV_BINDING: kv,
+			allowedUserId: parseInt(allowedUserId, 10),
+			stockSymbols: symbol,
+			forexSymbols: forexes,
+		};
+	}
+
+	config(): Config {
+		if (this.cfg === null) {
+			throw new Error('Config is not initialized, please call create first');
+		}
+		return this.cfg;
+	}
 }
 
 /**
  * Validates and parses environment variables.
  * Throws an error if any required variable is missing or invalid.
- * @param {Env} env - The raw environment variables object from the Worker.
+ * @param {TypedEnv} env - The raw environment variables object from the Worker.
  * @returns {Config} - The validated and parsed environment variables.
  * @throws {Error} If any required environment variable is missing or invalid.
  */
-function newSecret(env: Env): Secrets {
+function newSecret(env: TypedEnv): Secrets {
 	guardEmpty(env.TELEGRAM_BOT_TOKEN, 'TELEGRAM_BOT_TOKEN', 'env');
 	guardEmpty(env.TELEGRAM_SECRET_TOKEN, 'TELEGRAM_SECRET_TOKEN', 'env');
 	return {

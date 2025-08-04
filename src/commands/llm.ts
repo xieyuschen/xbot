@@ -1,52 +1,43 @@
-import { ChatGPTRequest, getChatGPTResponse } from '../utils/gpt';
-import { Command, TelegramUpdate } from '../types';
-import { sendTelegramMessage } from '../utils/telegram';
-import { Next } from './index';
+import { ChatGPTRequest, GPT_4O_MINI, OpenAIClient } from '../utils/gpt';
+import { Command, CommandRequest, TelegramUpdate } from '../types';
+import { Next, Registerable, Registry } from '../utils/registry';
 import { Config, guardEmpty } from '../utils/config';
+import { Commander } from '../utils/commader';
 
-export function createGptCommand(): Next {
-	return {
-		command: llmCOmmand,
-	};
-}
-
-const llmCOmmand: Command = {
-	name: 'llm',
-	description: 'Generates a response from the llm model.',
-	requiresInput: true,
-	async execute(
-		chatId: number,
-		messageText: string,
-		telegramApiUrl: string,
-		cfg: Config,
-		update: TelegramUpdate
-	) {
+export class LlmCommand implements Command, Registerable {
+	name = 'llm';
+	description = 'Generates a response from the llm model.';
+	requiresInput = true;
+	constructor(private cmd: Commander) {}
+	async run(req: CommandRequest) {
+		const { trimedText: messageText } = req;
+		const cfg = this.cmd.config();
 		guardEmpty(cfg.openaiApiKey, 'OPEN_AI_API_KEY', 'env');
-		if (!cfg.gptModel) {
-			cfg.gptModel = 'gpt-4o-mini';
-		}
-
+		const openaiClient = new OpenAIClient(cfg.openaiApiKey);
 		const gptRequest: ChatGPTRequest = {
-			model: cfg.gptModel,
+			model: cfg.gptModel || GPT_4O_MINI,
 			messages: [{ role: 'user', content: messageText }],
-			stream: false,
 		};
 
 		try {
-			const gptResponse = (await getChatGPTResponse(
-				cfg.openaiApiKey,
+			const gptResponse = (await openaiClient.generateResponse(
 				gptRequest
 			)) as string;
-			await sendTelegramMessage(telegramApiUrl, chatId, gptResponse);
+			await this.cmd.telegram_client().sendTelegramMessage(gptResponse);
 		} catch (error) {
 			console.error('Error calling GPT API:', error);
-			await sendTelegramMessage(
-				telegramApiUrl,
-				chatId,
-				`Sorry, I couldn't get a response from the GPT model: ${error}.`
-			);
+			await this.cmd
+				.telegram_client()
+				.sendTelegramMessage(
+					`Sorry, I couldn't get a response from the GPT model: ${error}`
+				);
 		}
 
 		return new Response('OK', { status: 200 });
-	},
-};
+	}
+	register(): void {
+		this.cmd.registry.register(this.name, {
+			command: this,
+		});
+	}
+}

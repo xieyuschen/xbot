@@ -1,48 +1,59 @@
 // src/utils/telegram.ts
 
-/**
- * Sends a message back to a Telegram chat.
- * @param {string} telegramApiUrl - The base URL for the Telegram Bot API (e.g., `https://api.telegram.org/bot<BOT_TOKEN>`).
- * @param {number} chatId - The ID of the chat to send the message to.
- * @param {string} text - The text message to send.
- * @returns {Promise<Response>} - The fetch response.
- */
-export async function sendTelegramMessage(
-	telegramApiUrl: string,
-	chatId: number,
-	text: string,
-	parse_mode: string = ''
-): Promise<Response> {
-	const sendMessageUrl = `${telegramApiUrl}/sendMessage`;
-	return fetch(sendMessageUrl, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			chat_id: chatId,
-			text: text,
-			...(parse_mode && { parse_mode: parse_mode }),
-			disable_web_page_preview: true,
-		}),
-	});
+export class TelegramClient {
+	static API_URL: string = 'https://api.telegram.org';
+	requestUrl: string;
+	chatID: string;
+	constructor(token: string, chatID: string) {
+		this.requestUrl = `${TelegramClient.API_URL}/bot${token}`;
+		this.chatID = chatID;
+	}
+
+	async sendTelegramMessage(
+		text: string,
+		parse_mode: string = ''
+	): Promise<Response> {
+		return fetch(`${this.requestUrl}/sendMessage`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: this.chatID,
+				text: text,
+				...(parse_mode && { parse_mode: parse_mode }),
+				disable_web_page_preview: true,
+			}),
+		});
+	}
+
+	// telegram supports limited reaction emoji,
+	// see https://core.telegram.org/bots/api#reactiontype
+	async sendTelegramReaction(
+		messageId: number,
+		emoji: string = '👀'
+	): Promise<Response> {
+		return fetch(`${this.requestUrl}/setMessageReaction`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: this.chatID,
+				message_id: messageId,
+				reaction: [{ type: 'emoji', emoji: emoji }],
+				is_big: false, // Set to true for a bigger animation
+			}),
+		});
+	}
+
+	async setMyCommands(commands: TelegramCommand[]): Promise<Response> {
+		// Call Telegram setMyCommands API
+		return await fetch(`${this.requestUrl}/setMyCommands`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ commands: commands }),
+		});
+	}
 }
 
-// telegram supports limited reaction emoji,
-// see https://core.telegram.org/bots/api#reactiontype
-export async function sendTelegramReaction(
-	telegramApiUrl: string,
-	chatId: number,
-	messageId: number,
-	emoji: string = '👀'
-): Promise<Response> {
-	const setReactionUrl = `${telegramApiUrl}/setMessageReaction`;
-	return fetch(setReactionUrl, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			chat_id: chatId,
-			message_id: messageId,
-			reaction: [{ type: 'emoji', emoji: emoji }],
-			is_big: false, // Set to true for a bigger animation
-		}),
-	});
-}
+type TelegramCommand = {
+	command: string;
+	description: string;
+};

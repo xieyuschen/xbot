@@ -1,29 +1,23 @@
 // src/commands/help.ts
 
 import { Command } from '../types';
-import { sendTelegramMessage } from '../utils/telegram';
-import { Next, topCommands } from './index';
+import { Next, Registerable } from '../utils/registry';
+import { Commander } from '../utils/commader';
 
-export function createHelpCommand(): Next {
-	return {
-		command: helpCommand,
-	};
-}
-
-const helpCommand: Command = {
-	name: 'help',
-	description: 'Shows available commands and their descriptions.',
-	requiresInput: false,
-	async execute(chatId, _, telegramApiUrl) {
-		const allCommands = topCommands();
-
+export class HelpCommand implements Command, Registerable {
+	constructor(private cmd: Commander) {}
+	name = 'help';
+	description = 'Shows available commands and their descriptions.';
+	requiresInput = false;
+	async run(_: any) {
+		const allCommands = this.cmd.registry.topCommands();
 		let responseText = 'Here are the available commands:\n\n';
 		responseText += allCommands
 			.map((cmd) => `/${cmd.name} - ${cmd.description}`)
 			.join('\n');
-		responseText += `\n/help - ${helpCommand.description}`;
+		responseText += `\n/help - ${this.description}`;
 
-		await sendTelegramMessage(telegramApiUrl, chatId, responseText);
+		await this.cmd.telegram_client().sendTelegramMessage(responseText);
 
 		// Set bot commands for Telegram clients (so "/" shows suggestions)
 		const commandsForTelegram = [
@@ -31,18 +25,16 @@ const helpCommand: Command = {
 				command: cmd.name,
 				description: cmd.description,
 			})),
-			{ command: 'help', description: helpCommand.description },
+			{ command: 'help', description: this.description },
 		];
 
-		// Call Telegram setMyCommands API
-		await fetch(`${telegramApiUrl}/setMyCommands`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ commands: commandsForTelegram }),
-		});
-
+		await this.cmd.telegram_client().setMyCommands(commandsForTelegram);
 		return new Response('OK', { status: 200 });
-	},
-};
+	}
 
-export default helpCommand;
+	register(): void {
+		this.cmd.registry.register(this.name, {
+			command: this,
+		});
+	}
+}

@@ -60,7 +60,7 @@ export function formatFmpDataForTelegram(
 		return 'No stock data available or fetched.';
 	}
 
-	let messageParts: string[] = [];
+	const messageParts: string[] = [];
 	messageParts.push(`*${description}:*`);
 	messageParts.push('`---------------------------`'); // Visual separator
 

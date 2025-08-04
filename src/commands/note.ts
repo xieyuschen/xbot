@@ -1,42 +1,39 @@
 // src/commands/echo.ts
 
-import { Next } from '.';
-import { Command, TelegramUpdate } from '../types';
-import { Config, guardEmpty, newGithubScret } from '../utils/config';
+import { Next, Registerable, Registry } from '../utils/registry';
+import { Command, CommandRequest, TelegramUpdate } from '../types';
+import { Common, Config, guardEmpty, newGithubScret } from '../utils/config';
 import { addContentToGitHubFile } from '../utils/github';
-import { sendTelegramMessage, sendTelegramReaction } from '../utils/telegram';
+import { Commander } from '../utils/commader';
 
-export function createNoteCommand(): Next {
-	return {
-		command: noteCommand,
-	};
-}
+export class NoteCommand implements Command, Registerable {
+	constructor(private cmd: Commander) {}
+	name = 'note';
+	description = 'Note the input down';
+	requiresInput = true;
 
-const noteCommand: Command = {
-	name: 'note',
-	description: 'Note the input down',
-	requiresInput: true,
-	async execute(
-		chatId: number,
-		messageText: string,
-		telegramApiUrl: string,
-		cfg: Config,
-		update: TelegramUpdate
-	) {
+	register(): void {
+		this.cmd.registry.register(this.name, {
+			command: this,
+		});
+	}
+
+	async run(req: CommandRequest) {
+		const { trimedText: messageText, telegramUpdate: telegramUpdate } = req;
 		if (messageText === '') {
 			return new Response('OK', { status: 200 });
 		}
 		try {
+			const cfg = this.cmd.config();
 			cfg.github = await newGithubScret(cfg.KV_BINDING);
 			guardEmpty(cfg.githubToken, 'GITHUB_TOKEN', 'env');
 
-			// Attempt to add content to the GitHub file
 			await addContentToGitHubFile(messageText, cfg);
-			const messageId = update.message?.message_id;
+			const messageId = telegramUpdate!.message?.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
 			}
-			await sendTelegramReaction(telegramApiUrl, chatId, messageId);
+			await this.cmd.telegram_client().sendTelegramReaction(messageId);
 			return new Response('OK', { status: 200 });
 		} catch (error: any) {
 			// Log the error for debugging
@@ -45,10 +42,8 @@ const noteCommand: Command = {
 			// Send error message back to the user
 			const errorMessage = `Failed to record your note. Please try again later. (Error: ${error.message || 'Unknown error'})`;
 
-			await sendTelegramMessage(telegramApiUrl, chatId, errorMessage);
+			await this.cmd.telegram_client().sendTelegramMessage(errorMessage);
 			return new Response('Internal Server Error', { status: 200 });
 		}
-	},
-};
-
-export default noteCommand;
+	}
+}

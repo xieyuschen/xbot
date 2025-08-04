@@ -11,61 +11,56 @@ export interface ChatGPTRequest {
 	stream?: boolean; // Optional: whether to stream the response
 }
 
-/**
- * Sends a request to the OpenAI ChatGPT API and returns the AI's response.
- *
- * @param apiKey Your OpenAI API key.
- * @param request The request object containing the model and messages.
- * @returns A Promise that resolves to the AI's response content (string)
- * or an AsyncIterable if `stream` is true.
- * @throws Error if the API call fails or the API key is missing.
- */
-export async function getChatGPTResponse(
-	apiKey: string,
-	request: ChatGPTRequest
-): Promise<string | AsyncIterable<string>> {
-	if (!apiKey) {
-		throw new Error('OpenAI API key is missing. Please provide it.');
+export const GPT_4O_MINI = 'gpt-4o-mini';
+export const TEXT_EMBEDDING = 'text-embedding-ada-002';
+
+export class OpenAIClient {
+	apiKey: string;
+	openai: OpenAI;
+	constructor(apiKey: string) {
+		this.apiKey = apiKey;
+		this.openai = new OpenAI({
+			apiKey: apiKey,
+		});
 	}
+	public async generateResponse(
+		request: ChatGPTRequest
+	): Promise<string | AsyncIterable<string>> {
+		try {
+			if (request.stream) {
+				// Handle streaming responses
+				const stream = await this.openai.chat.completions.create({
+					model: request.model,
+					messages: request.messages,
+					stream: true,
+				});
 
-	const openai = new OpenAI({
-		apiKey: apiKey,
-	});
+				// Return an AsyncIterable for the caller to consume chunks
+				return (async function* () {
+					for await (const chunk of stream) {
+						yield chunk.choices[0]?.delta?.content || '';
+					}
+				})();
+			} else {
+				// Handle non-streaming responses
+				const chatCompletion = await this.openai.chat.completions.create({
+					model: request.model,
+					messages: request.messages,
+				});
 
-	try {
-		if (request.stream) {
-			// Handle streaming responses
-			const stream = await openai.chat.completions.create({
-				model: request.model,
-				messages: request.messages,
-				stream: true,
-			});
-
-			// Return an AsyncIterable for the caller to consume chunks
-			return (async function* () {
-				for await (const chunk of stream) {
-					yield chunk.choices[0]?.delta?.content || '';
-				}
-			})();
-		} else {
-			// Handle non-streaming responses
-			const chatCompletion = await openai.chat.completions.create({
-				model: request.model,
-				messages: request.messages,
-			});
-
-			// Return the content of the first choice
-			return (
-				chatCompletion.choices[0]?.message?.content || 'No response content.'
-			);
+				// Return the content of the first choice
+				return (
+					chatCompletion.choices[0]?.message?.content || 'No response content.'
+				);
+			}
+		} catch (error: any) {
+			console.error('Error calling OpenAI API:', error);
+			if (error.response) {
+				// Log more details if it's an Axios error (common with fetch wrappers)
+				console.error('Status:', error.response.status);
+				console.error('Data:', error.response.data);
+			}
+			throw new Error(`Failed to get response from ChatGPT: ${error.message}`);
 		}
-	} catch (error: any) {
-		console.error('Error calling OpenAI API:', error);
-		if (error.response) {
-			// Log more details if it's an Axios error (common with fetch wrappers)
-			console.error('Status:', error.response.status);
-			console.error('Data:', error.response.data);
-		}
-		throw new Error(`Failed to get response from ChatGPT: ${error.message}`);
 	}
 }

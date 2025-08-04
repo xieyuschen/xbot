@@ -160,7 +160,7 @@ export function processFile(
 	// 3. Regular expression to match the section header format `#### <time>`
 	const sectionRegex = /^#### (\d{2} \w{3} \d{4})$/;
 
-	let updatedLines: string[] = [];
+	const updatedLines: string[] = [];
 	let foundTodaySection = false;
 	let i = 0;
 
