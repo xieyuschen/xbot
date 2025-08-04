@@ -1,12 +1,10 @@
 // src/types.ts
 
-import { Config } from './utils/config';
-
 /**
  * Represents the environment variables available to the Worker.
  * All required variables are listed here.
  */
-export interface Env {
+export interface TypedEnv {
 	TELEGRAM_BOT_TOKEN: string;
 	TELEGRAM_SECRET_TOKEN: string; // Used to verify requests from Telegram
 	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
@@ -32,6 +30,12 @@ export interface TelegramUpdate {
 	// Add other Telegram update types if needed (e.g., callback_query, channel_post)
 }
 
+export interface CommandRequest {
+	// trimedText is the original data trimed the possible starting command.
+	trimedText: string;
+	telegramUpdate?: TelegramUpdate;
+}
+
 /**
  * Interface for a command handler.
  */
@@ -39,13 +43,7 @@ export interface Command {
 	name: string;
 	description: string;
 	requiresInput: boolean;
-	execute: (
-		chatId: number,
-		messageText: string,
-		telegramApiUrl: string,
-		env: Config,
-		update: TelegramUpdate
-	) => Promise<Response>;
+	run: (req: CommandRequest) => Promise<Response>;
 }
 
 /**

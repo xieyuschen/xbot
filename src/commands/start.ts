@@ -1,25 +1,30 @@
 // src/commands/start.ts
 
-import { Next } from '.';
+import { Next, Registerable } from '../utils/registry';
 import { Command } from '../types';
-import { sendTelegramMessage } from '../utils/telegram';
+import { Commander } from '../utils/commader';
 
-export function createStartCommand(): Next {
-	return {
-		command: startCommand,
-	};
-}
+export class StartCommand implements Command, Registerable {
+	constructor(private cmd: Commander) {
+		console.log('StartCommand initialized with cmd:', cmd);
+	}
+	name = 'start';
+	requiresInput = false;
+	description = 'Starts the bot and sends a welcome message.';
 
-const startCommand: Command = {
-	name: 'start',
-	requiresInput: false,
-	description: 'Starts the bot and sends a welcome message.',
-	async execute(chatId, _, telegramApiUrl) {
+	register(): void {
+		this.cmd.registry.register(this.name, {
+			command: this,
+		});
+	}
+
+	async run(_: any) {
 		const responseText =
 			'Hello! Welcome to xbot. Type /help to see what I can do!';
-		await sendTelegramMessage(telegramApiUrl, chatId, responseText);
+		console.log(
+			'run this.cmd.telegram_client().sendTelegramMessage(responseText);'
+		);
+		await this.cmd.telegram_client().sendTelegramMessage(responseText);
 		return new Response('OK', { status: 200 });
-	},
-};
-
-export default startCommand;
+	}
+}

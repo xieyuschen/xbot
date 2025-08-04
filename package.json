@@ -6,7 +6,8 @@
 	"scripts": {
 		"start": "wrangler dev",
 		"deploy": "wrangler deploy",
-		"build": "tsc"
+		"build": "tsc",
+		"lint": "eslint . --ext .ts --fix"
 	},
 	"keywords": [
 		"cloudflare",
@@ -19,18 +20,22 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20240718.0",
+		"@eslint/js": "^9.32.0",
 		"@octokit/rest": "^20.1.1",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^24.1.0",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
-		"eslint": "^9.31.0",
+		"eslint": "^9.32.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-prettier": "^5.5.3",
+		"globals": "^16.3.0",
 		"jest": "^30.0.4",
+		"jiti": "^2.5.1",
 		"prettier": "^3.6.2",
 		"ts-jest": "^29.4.0",
 		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.38.0",
 		"wrangler": "^4.26.0"
 	},
 	"dependencies": {
