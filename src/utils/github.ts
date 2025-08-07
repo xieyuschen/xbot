@@ -158,15 +158,29 @@ export function processFile(
 	const lines = fileContent.split('\n');
 
 	// 3. Regular expression to match the section header format `#### <time>`
-	const sectionRegex = /^#### (\d{2} \w{3} \d{4})$/;
+	const todaySectionRegex = /^#### (\d{2} \w{3} \d{4})$/;
+	const daySectionRegex = new RegExp(`^####.*$`);
 
 	const updatedLines: string[] = [];
+	const headerLines: string[] = [];
 	let foundTodaySection = false;
 	let i = 0;
+	// stop until we encounter a section header,
+	// so we start to check whether we insert new content under this section,
+	// or we need to create a new section for today.
+	while (i < lines.length) {
+		const line = lines[i];
+		if (line.match(daySectionRegex)) {
+			break;
+		}
+		i++;
+		// Copy all other lines as-is
+		headerLines.push(line);
+	}
 
 	while (i < lines.length) {
 		const line = lines[i];
-		const matches = line.match(sectionRegex);
+		const matches = line.match(todaySectionRegex);
 
 		// Check if the line matches the section header format and this is today's section.
 		if (matches && matches[1] === todayFormatted) {
@@ -176,7 +190,7 @@ export function processFile(
 			// Copy all lines in today's section until the next section or end of file
 			let contentAdded = false;
 			for (let j = i + 1; j < lines.length; j++) {
-				if (sectionRegex.test(lines[j])) {
+				if (todaySectionRegex.test(lines[j])) {
 					// Found next section header, insert new content before it
 					updatedLines.push(newContent);
 					updatedLines.push(''); // Add a blank line after new content for spacing
@@ -204,10 +218,10 @@ export function processFile(
 	// If today's section was not found, prepend it to the file
 	if (!foundTodaySection) {
 		const newSection = `${sectionHeader}\n${newContent}\n\n`;
-		return newSection + updatedLines.join('\n');
+		return headerLines.join('\n') + newSection + updatedLines.join('\n');
 	}
 
-	return updatedLines.join('\n');
+	return headerLines.join('\n') + updatedLines.join('\n');
 }
 
 /**
