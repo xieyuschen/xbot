@@ -53,14 +53,14 @@ export class OpenAIClient {
 					chatCompletion.choices[0]?.message?.content || 'No response content.'
 				);
 			}
-		} catch (error: any) {
-			console.error('Error calling OpenAI API:', error);
-			if (error.response) {
-				// Log more details if it's an Axios error (common with fetch wrappers)
-				console.error('Status:', error.response.status);
-				console.error('Data:', error.response.data);
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				console.error('Error calling OpenAI API:', error);
+				throw new Error(
+					`Failed to get response from ChatGPT: ${error.message}`
+				);
 			}
-			throw new Error(`Failed to get response from ChatGPT: ${error.message}`);
+			throw new Error(`Failed to get response from ChatGPT: ${error}`);
 		}
 	}
 }

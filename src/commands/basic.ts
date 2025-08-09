@@ -2,7 +2,7 @@ import { Command, CommandRequest } from '../types';
 import { Config, guardEmpty } from '../utils/config';
 import { FmpQuote, formatFmpDataForTelegram, getQuote } from '../utils/fmp';
 import { Commander } from '../utils/commader';
-import { Registerable, Registry } from '../utils/registry';
+import { Registerable } from '../utils/registry';
 
 type StringKeysOf<T> = {
 	[K in keyof T]: T[K] extends string ? K : never;
@@ -57,7 +57,7 @@ export class BasicCmd implements Command, Registerable {
 					} else {
 						failedSymbols.push(symbol);
 					}
-				} catch (innerError: any) {
+				} catch (innerError: unknown) {
 					console.error(`Failed to fetch data for ${symbol}:`, innerError);
 					failedSymbols.push(symbol);
 				}
@@ -82,16 +82,16 @@ export class BasicCmd implements Command, Registerable {
 					);
 			}
 			return new Response('OK', { status: 200 }); // Always return 200 OK to Telegram
-		} catch (error: any) {
+		} catch (error: unknown) {
 			// This catch block handles errors from the overall execution, not just individual symbol fetches
 			console.error('Error occurred while fetching info:', error);
-			const errorMessage = `Failed to get information. Please try again later. (Error: ${error.message || 'Unknown error'})`;
+			const errorMessage = `Failed to get information. Please try again later. (Error: ${String(error) || 'Unknown error'})`;
 			await this.cmd.telegram_client().sendTelegramMessage(errorMessage);
 			return new Response('Internal Server Error', { status: 200 }); // Return 200 to Telegram
 		}
 	}
 
-	async list(_: CommandRequest) {
+	async list(_cmd: CommandRequest) {
 		const symbols = await this.cfg.KV_BINDING.get(this.kvKey);
 		this.cmd
 			.telegram_client()

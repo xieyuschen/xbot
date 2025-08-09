@@ -61,12 +61,22 @@ export async function getGitHubFileContent(
 				'Failed to decode file content: Expected base64 encoded string content.'
 			);
 		}
-	} catch (error: any) {
-		if (error.status === 404) {
-			// Re-throw with specific message for file not found
-			throw new Error(`File not found: ${filePath} on branch ${branchName}`);
+	} catch (error: unknown) {
+		interface StatusError extends Error {
+			status?: number;
 		}
-		throw new Error(`Failed to get file content: ${error.message || error}`);
+		if (error instanceof Error) {
+			const statusError = error as StatusError;
+
+			if (statusError.status === 404) {
+				throw new Error(`File not found: ${filePath} on branch ${branchName}`);
+			}
+			// Handle other Error instances
+			throw new Error(`Failed to get file content: ${error.message}`);
+		}
+
+		// Handle non-Error cases (e.g., strings, objects, etc.)
+		throw new Error(`Failed to get file content: ${String(error)}`);
 	}
 }
 
@@ -122,8 +132,11 @@ export async function updateGitHubFileContent(
 			sha: sha || undefined, // SHA is optional for new files, required for updates
 			branch: branchName,
 		});
-	} catch (error: any) {
-		throw new Error(`Failed to update file: ${error.message || error}`);
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			throw new Error(`Failed to update file: ${error.message || error}`);
+		}
+		throw new Error(`Failed to sync up file: ${error}`);
 	}
 }
 
@@ -261,14 +274,17 @@ export async function addContentToGitHubFile(
 		);
 		fileContent = content;
 		fileSha = sha;
-	} catch (error: any) {
-		if (error.message.includes('File not found')) {
-			console.warn(`File ${githubFilePath} not found. Creating new file.`);
-			fileContent = '';
-			fileSha = ''; // No SHA for a new file
-		} else {
-			throw new Error(`Failed to retrieve file content: ${error.message}`);
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			if (error.message.includes('File not found')) {
+				console.warn(`File ${githubFilePath} not found. Creating new file.`);
+				fileContent = '';
+				fileSha = ''; // No SHA for a new file
+			} else {
+				throw new Error(`Failed to retrieve file content: ${error.message}`);
+			}
 		}
+		throw error;
 	}
 
 	// Process the file content
@@ -286,7 +302,10 @@ export async function addContentToGitHubFile(
 			fileSha, // Pass empty string if new file, otherwise the existing SHA
 			githubBranchName
 		);
-	} catch (error: any) {
-		throw new Error(`Failed to sync up file: ${error.message}`);
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			throw new Error(`Failed to sync up file: ${error.message}`);
+		}
+		throw new Error(`Failed to sync up file: ${error}`);
 	}
 }
