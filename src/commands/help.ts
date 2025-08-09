@@ -1,7 +1,7 @@
 // src/commands/help.ts
 
-import { Command } from '../types';
-import { Next, Registerable } from '../utils/registry';
+import { Command, CommandRequest } from '../types';
+import { Registerable } from '../utils/registry';
 import { Commander } from '../utils/commader';
 
 export class HelpCommand implements Command, Registerable {
@@ -9,7 +9,7 @@ export class HelpCommand implements Command, Registerable {
 	name = 'help';
 	description = 'Shows available commands and their descriptions.';
 	requiresInput = false;
-	async run(_: any) {
+	async run(_req: CommandRequest) {
 		const allCommands = this.cmd.registry.topCommands();
 		let responseText = 'Here are the available commands:\n\n';
 		responseText += allCommands

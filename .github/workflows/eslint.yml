@@ -1,4 +1,4 @@
-name: ESLint
+name: ESLint Check
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   eslint:
-    name: Run ESLint
+    name: eslint
     runs-on: ubuntu-latest
 
     steps:
@@ -31,5 +31,3 @@ jobs:
       # Step 4: Run ESLint
       - name: Run ESLint
         run: npm run lint
-
-    continue-on-error: true # Allow failures for this job

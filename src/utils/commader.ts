@@ -83,7 +83,12 @@ export class Commander extends Common {
 	public async serveTelegramMessages(request: Request): Promise<Response> {
 		try {
 			const update: TelegramUpdate = await this.guard(request);
-			let messageText = update.message?.text!;
+			if (!update.message || !update.message.text) {
+				throw new Error(
+					'telegram update(message or message.text is undefined) is invalid'
+				);
+			}
+			let messageText = update.message.text!;
 
 			let arr: string[] = [];
 			if (messageText.startsWith('/')) {
@@ -100,11 +105,16 @@ export class Commander extends Common {
 				trimedText: messageText,
 				telegramUpdate: update,
 			});
-		} catch (error: any) {
-			console.error('Error processing request:', error, error.stack);
-			// For general request processing errors, return 200 OK to Telegram
-			// to prevent excessive retries, but log the error.
-			return new Response(`Error processing request: ${error.message}`, {
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				console.error('Error processing request:', error, error.stack);
+				// For general request processing errors, return 200 OK to Telegram
+				// to prevent excessive retries, but log the error.
+				return new Response(`Error processing request: ${error.message}`, {
+					status: 200,
+				});
+			}
+			return new Response(`An unknown error occurred: ${error}`, {
 				status: 200,
 			});
 		}
@@ -112,18 +122,13 @@ export class Commander extends Common {
 
 	public async serveCronJob() {
 		const cfg = this.config();
-		const update: TelegramUpdate = {};
-
 		await this.registry
 			.findCommand(['stock'])({ trimedText: cfg.stockSymbols })
 			.then(() => {
 				console.log('Scheduled stock command executed successfully');
 			})
-			.catch((error: any) => {
-				console.error(
-					'Error executing scheduled stock command:',
-					error.message
-				);
+			.catch((error: unknown) => {
+				console.error(`Error executing scheduled stock command: ${error}`);
 			});
 
 		await this.registry
@@ -131,11 +136,8 @@ export class Commander extends Common {
 			.then(() => {
 				console.log('Scheduled forex command executed successfully');
 			})
-			.catch((error: any) => {
-				console.error(
-					'Error executing scheduled forex command:',
-					error.message
-				);
+			.catch((error: unknown) => {
+				console.error(`Error executing scheduled stock command: ${error}`);
 			});
 	}
 }

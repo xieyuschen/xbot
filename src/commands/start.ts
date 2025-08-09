@@ -1,7 +1,5 @@
-// src/commands/start.ts
-
-import { Next, Registerable } from '../utils/registry';
-import { Command } from '../types';
+import { Registerable } from '../utils/registry';
+import { Command, CommandRequest } from '../types';
 import { Commander } from '../utils/commader';
 
 export class StartCommand implements Command, Registerable {
@@ -18,7 +16,7 @@ export class StartCommand implements Command, Registerable {
 		});
 	}
 
-	async run(_: any) {
+	async run(_req: CommandRequest) {
 		const responseText =
 			'Hello! Welcome to xbot. Type /help to see what I can do!';
 		console.log(

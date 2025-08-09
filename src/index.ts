@@ -4,9 +4,9 @@ import { Registry } from './utils/registry';
 
 export default {
 	async scheduled(
-		controller: ScheduledController,
+		_controller: ScheduledController,
 		env: TypedEnv,
-		ctx: ExecutionContext
+		_ctx: ExecutionContext
 	) {
 		const registry = new Registry();
 		const commander = new Commander(env, registry);

@@ -6,14 +6,15 @@ Xbot is a telegram bot running inside cloudflare worker for personal usages.
 
 - `note`: append the input to a specified github repo branch file, it's used for me to add my daily whispers and random thoughts.
 - `stock`: show the changes of a stock, separated by `;`.
-     - `add`: add a symbol to watch.
-     - `list`: list all watched symbols.
-     - `remove`: remove some symbols, allow to remove in a batch seperated by `;`.
+  - `add`: add a symbol to watch.
+  - `list`: list all watched symbols.
+  - `remove`: remove some symbols, allow to remove in a batch seperated by `;`.
 - `help`: a command to print all available commands.
 
 If no commands is provided, the bot will note it down by default.
 
 ## Setting up
+
 ### 1. Create a telegram Bot
 
 Xbot not supports telegram bot only, so it requires a telegram bot.
@@ -27,6 +28,7 @@ See the [install and update](https://developers.cloudflare.com/workers/wrangler/
 Basically, you need to `wrangler login` and try `npm run deploy`, the wrangler will help you to create a worker.
 
 Then, xbot requires some secrets and setting up to start.
+
 ```
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 npx wrangler secret put GITHUB_TOKEN

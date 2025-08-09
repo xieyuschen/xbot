@@ -1,7 +1,7 @@
 import { ChatGPTRequest, GPT_4O_MINI, OpenAIClient } from '../utils/gpt';
-import { Command, CommandRequest, TelegramUpdate } from '../types';
-import { Next, Registerable, Registry } from '../utils/registry';
-import { Config, guardEmpty } from '../utils/config';
+import { Command, CommandRequest } from '../types';
+import { Registerable } from '../utils/registry';
+import { guardEmpty } from '../utils/config';
 import { Commander } from '../utils/commader';
 
 export class LlmCommand implements Command, Registerable {
