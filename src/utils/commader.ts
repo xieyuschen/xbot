@@ -8,9 +8,13 @@ import { NoteCommand } from '../commands/note';
 import { StockCommand } from '../commands/stock';
 import { ForexCommand } from '../commands/forex';
 import { StartCommand } from '../commands/start';
+import { GithubClient } from './github';
+import { FmpClient } from './fmp';
 
 export class Commander extends Common {
 	private telegramClient: TelegramClient | null = null;
+	private githubClient: GithubClient | null = null;
+	private fmpClient: FmpClient | null = null;
 	public registry: Registry;
 
 	private commands = [
@@ -33,6 +37,25 @@ export class Commander extends Common {
 			this.env.TELEGRAM_BOT_TOKEN,
 			this.config().allowedUserId.toString()
 		);
+		if (this.config().github) {
+			this.githubClient = new GithubClient(
+				this.config().githubToken,
+				this.config().github!
+			);
+		} else {
+			console.warn(
+				'Github configuration is not set, skipping Github client initialization.'
+			);
+		}
+
+		if (this.config().fmpAPIKey) {
+			this.fmpClient = new FmpClient(this.config().fmpAPIKey);
+		} else {
+			console.warn(
+				'FMP API key is not set, skipping FMP client initialization.'
+			);
+		}
+
 		// TOOD(yuchen): this part of logic relies on the create to be done,
 		// this is not a good pattern, find an approach in typescript to tackle this.
 		this.commands.forEach((CommandClass) => {
@@ -41,6 +64,23 @@ export class Commander extends Common {
 		});
 	}
 
+	fmp_client(): FmpClient {
+		if (!this.fmpClient) {
+			throw new Error(
+				'fmp client is not initialized, please call Commander.create beforehand.'
+			);
+		}
+		return this.fmpClient;
+	}
+
+	github_client(): GithubClient {
+		if (!this.githubClient) {
+			throw new Error(
+				'github client is not initialized, please call Commander.create beforehand.'
+			);
+		}
+		return this.githubClient;
+	}
 	telegram_client(): TelegramClient {
 		if (!this.telegramClient) {
 			throw new Error(

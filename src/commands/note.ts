@@ -1,7 +1,6 @@
 import { Registerable } from '../utils/registry';
 import { Command, CommandRequest } from '../types';
 import { guardEmpty, newGithubScret } from '../utils/config';
-import { addContentToGitHubFile } from '../utils/github';
 import { Commander } from '../utils/commader';
 
 export class NoteCommand implements Command, Registerable {
@@ -26,7 +25,7 @@ export class NoteCommand implements Command, Registerable {
 			cfg.github = await newGithubScret(cfg.KV_BINDING);
 			guardEmpty(cfg.githubToken, 'GITHUB_TOKEN', 'env');
 
-			await addContentToGitHubFile(messageText, cfg);
+			await this.cmd.github_client().addContentToGitHubFile(messageText);
 			const messageId = telegramUpdate!.message?.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
