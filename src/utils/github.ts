@@ -228,13 +228,16 @@ export function processFile(
 		i++;
 	}
 
+	const headerLineStr = headerLines.join('\n') + '\n';
+	const updatedLineStr = updatedLines.join('\n');
+
 	// If today's section was not found, prepend it to the file
 	if (!foundTodaySection) {
 		const newSection = `${sectionHeader}\n${newContent}\n\n`;
-		return headerLines.join('\n') + newSection + updatedLines.join('\n');
+		return headerLineStr + newSection + updatedLineStr;
 	}
 
-	return headerLines.join('\n') + updatedLines.join('\n');
+	return headerLineStr + updatedLineStr;
 }
 
 /**
