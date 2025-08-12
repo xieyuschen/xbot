@@ -1,5 +1,3 @@
-import { Config } from './config';
-
 // This interface assumes a basic structure of the stock quote response.
 // You might need to adjust it based on the exact FMP response.
 export interface FmpQuote {
@@ -15,35 +13,34 @@ export interface FmpQuote {
 	marketCap: number;
 }
 
-export async function getQuote(
-	env: Config,
-	symbol: string
-): Promise<FmpQuote | null> {
-	const apiUrl = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${env.fmpAPIKey}`;
+export class FmpClient {
+	constructor(private apiKey: string) {}
+	async getQuote(symbol: string): Promise<FmpQuote | null> {
+		const apiUrl = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${this.apiKey}`;
+		try {
+			const response = await fetch(apiUrl);
 
-	try {
-		const response = await fetch(apiUrl);
+			if (!response.ok) {
+				console.error(
+					`FMP API HTTP error for ${symbol}: status ${response.status} - ${await response.text()}`
+				);
+				throw new Error(`FMP API HTTP error! status: ${response.status}`);
+			}
 
-		if (!response.ok) {
-			console.error(
-				`FMP API HTTP error for ${symbol}: status ${response.status} - ${await response.text()}`
-			);
-			throw new Error(`FMP API HTTP error! status: ${response.status}`);
+			const data: FmpQuote[] = await response.json();
+			if (data && data.length > 0) {
+				console.log(
+					`Fetched data for ${symbol}:`,
+					JSON.stringify(data[0], null, 2)
+				);
+				return data[0]; // FMP /quote returns an array, take the first element
+			}
+			console.warn(`No data returned for symbol: ${symbol}`);
+			return null;
+		} catch (error) {
+			console.error(`Error fetching stock data for ${symbol}:`, error);
+			return null; // Return null on error so the process can continue for other symbols
 		}
-
-		const data: FmpQuote[] = await response.json();
-		if (data && data.length > 0) {
-			console.log(
-				`Fetched data for ${symbol}:`,
-				JSON.stringify(data[0], null, 2)
-			);
-			return data[0]; // FMP /quote returns an array, take the first element
-		}
-		console.warn(`No data returned for symbol: ${symbol}`);
-		return null;
-	} catch (error) {
-		console.error(`Error fetching stock data for ${symbol}:`, error);
-		return null; // Return null on error so the process can continue for other symbols
 	}
 }
 

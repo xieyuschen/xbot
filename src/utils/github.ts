@@ -1,82 +1,129 @@
-// src/utils/github.ts
-
-import { Config } from './config';
 import { Octokit } from '@octokit/rest'; // Import Octokit
+import { GithubConfig } from './config';
 
-/**
- * Creates an authenticated Octokit client.
- * @param {string} token - The GitHub Personal Access Token.
- * @returns {Octokit} An Octokit client instance.
- */
-function createGitHubClient(token: string): Octokit {
-	return new Octokit({
-		auth: token,
-		// Optional: User-Agent header is automatically added by Octokit
-		// baseUrl: 'https://api.github.com', // Default, can be omitted
-	});
-}
+export class GithubClient extends Octokit {
+	constructor(
+		token: string,
+		private config: GithubConfig
+	) {
+		super({ auth: token });
+	}
+	private async getGitHubFileContent(): Promise<{
+		content: string;
+		sha: string;
+	}> {
+		const config = this.config;
+		try {
+			const response = await this.repos.getContent({
+				owner: config.githubRepoOwner,
+				repo: config.githubRepoName,
+				path: config.githubFilePath,
+				ref: config.githubBranchName,
+			});
 
-/**
- * Fetches the content of a file from a GitHub repository using Octokit.
- * @param {Octokit} client - The authenticated Octokit client.
- * @param {string} owner - The repository owner.
- * @param {string} repo - The repository name.
- * @param {string} filePath - The path to the file.
- * @param {string} branchName - The branch name.
- * @returns {Promise<{ content: string; sha: string }>} - The file content (decoded) and its SHA.
- * @throws {Error} If the file cannot be fetched or decoded.
- */
-export async function getGitHubFileContent(
-	client: Octokit, // Now takes Octokit client
-	owner: string,
-	repo: string,
-	filePath: string,
-	branchName: string
-): Promise<{ content: string; sha: string }> {
-	try {
-		const response = await client.repos.getContent({
-			owner,
-			repo,
-			path: filePath,
-			ref: branchName,
-		});
-
-		// Octokit's getContent response type is complex, check for file type
-		if (Array.isArray(response.data)) {
-			throw new Error(`Path ${filePath} is a directory, not a file.`);
-		}
-
-		const data = response.data;
-
-		// The content property is base64 encoded by default for files
-		if (
-			'content' in data &&
-			typeof data.content === 'string' &&
-			data.encoding === 'base64'
-		) {
-			const decodedContent = base64ToUtf8(data.content);
-			return { content: decodedContent, sha: data.sha };
-		} else {
-			throw new Error(
-				'Failed to decode file content: Expected base64 encoded string content.'
-			);
-		}
-	} catch (error: unknown) {
-		interface StatusError extends Error {
-			status?: number;
-		}
-		if (error instanceof Error) {
-			const statusError = error as StatusError;
-
-			if (statusError.status === 404) {
-				throw new Error(`File not found: ${filePath} on branch ${branchName}`);
+			// Octokit's getContent response type is complex, check for file type
+			if (Array.isArray(response.data)) {
+				throw new Error(
+					`Path ${config.githubFilePath} is a directory, not a file.`
+				);
 			}
-			// Handle other Error instances
-			throw new Error(`Failed to get file content: ${error.message}`);
+
+			const data = response.data;
+
+			// The content property is base64 encoded by default for files
+			if (
+				'content' in data &&
+				typeof data.content === 'string' &&
+				data.encoding === 'base64'
+			) {
+				const decodedContent = base64ToUtf8(data.content);
+				return { content: decodedContent, sha: data.sha };
+			} else {
+				throw new Error(
+					'Failed to decode file content: Expected base64 encoded string content.'
+				);
+			}
+		} catch (error: unknown) {
+			interface StatusError extends Error {
+				status?: number;
+			}
+			if (error instanceof Error) {
+				const statusError = error as StatusError;
+
+				if (statusError.status === 404) {
+					throw new Error(
+						`File not found: ${config.githubFilePath} on branch ${config.githubBranchName}`
+					);
+				}
+				// Handle other Error instances
+				throw new Error(`Failed to get file content: ${error.message}`);
+			}
+
+			// Handle non-Error cases (e.g., strings, objects, etc.)
+			throw new Error(`Failed to get file content: ${String(error)}`);
+		}
+	}
+	private async updateGitHubFileContent(
+		updatedContent: string,
+		sha: string
+	): Promise<void> {
+		const encodedContent = utf8ToBase64(updatedContent);
+		const config = this.config;
+		try {
+			await this.repos.createOrUpdateFileContents({
+				owner: config.githubRepoOwner,
+				repo: config.githubRepoName,
+				path: config.githubFilePath,
+				message: config.githubCommitMessage,
+				content: encodedContent,
+				sha: sha || undefined, // SHA is optional for new files, required for updates
+				branch: config.githubBranchName,
+			});
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				throw new Error(`Failed to update file: ${error.message || error}`);
+			}
+			throw new Error(`Failed to sync up file: ${error}`);
+		}
+	}
+	async addContentToGitHubFile(newContent: string): Promise<void> {
+		let fileContent: string;
+		let fileSha: string;
+
+		try {
+			const { content, sha } = await this.getGitHubFileContent();
+			fileContent = content;
+			fileSha = sha;
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				if (error.message.includes('File not found')) {
+					console.warn(
+						`File ${this.config.githubFilePath} not found. Creating new file.`
+					);
+					fileContent = '';
+					fileSha = ''; // No SHA for a new file
+				} else {
+					throw new Error(`Failed to retrieve file content: ${error.message}`);
+				}
+			}
+			throw error;
 		}
 
-		// Handle non-Error cases (e.g., strings, objects, etc.)
-		throw new Error(`Failed to get file content: ${String(error)}`);
+		// Process the file content
+		const updatedContent = processFile(new Date(), fileContent, newContent);
+
+		// 7. Update the file in the repository
+		try {
+			await this.updateGitHubFileContent(
+				updatedContent,
+				fileSha // Pass empty string if new file, otherwise the existing SHA
+			);
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				throw new Error(`Failed to sync up file: ${error.message}`);
+			}
+			throw new Error(`Failed to sync up file: ${error}`);
+		}
 	}
 }
 
@@ -96,48 +143,6 @@ function base64ToUtf8(base64Content: string): string {
 
 	const decoder = new TextDecoder('utf-8'); // Decode UTF-8 bytes to a string
 	return decoder.decode(utf8Bytes);
-}
-
-/**
- * Updates the content of a file in a GitHub repository using Octokit.
- * @param {Octokit} client - The authenticated Octokit client.
- * @param {string} owner - The repository owner.
- * @param {string} repo - The repository name.
- * @param {string} filePath - The path to the file.
- * @param {string} commitMessage - The commit message.
- * @param {string} updatedContent - The new content for the file.
- * @param {string} sha - The SHA of the file's current version (for optimistic locking).
- * @param {string} branchName - The branch name.
- * @throws {Error} If the file update fails.
- */
-export async function updateGitHubFileContent(
-	client: Octokit, // Now takes Octokit client
-	owner: string,
-	repo: string,
-	filePath: string,
-	commitMessage: string,
-	updatedContent: string,
-	sha: string,
-	branchName: string
-): Promise<void> {
-	const encodedContent = utf8ToBase64(updatedContent);
-
-	try {
-		await client.repos.createOrUpdateFileContents({
-			owner,
-			repo,
-			path: filePath,
-			message: commitMessage,
-			content: encodedContent,
-			sha: sha || undefined, // SHA is optional for new files, required for updates
-			branch: branchName,
-		});
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			throw new Error(`Failed to update file: ${error.message || error}`);
-		}
-		throw new Error(`Failed to sync up file: ${error}`);
-	}
 }
 
 /**
@@ -238,77 +243,4 @@ export function processFile(
 	}
 
 	return headerLineStr + updatedLineStr;
-}
-
-/**
- * Adds new content to the specified GitHub file, processing it based on date sections.
- * This is the main function that orchestrates the GitHub API calls and file processing.
- * @param {string} newContent - The content to add to the file.
- * @param {Config} cfg - The validated environment variables.
- * @returns {Promise<void>}
- * @throws {Error} If any step of the process fails.
- */
-export async function addContentToGitHubFile(
-	newContent: string,
-	cfg: Config
-): Promise<void> {
-	const {
-		githubRepoOwner,
-		githubRepoName,
-		githubFilePath,
-		githubCommitMessage,
-		githubBranchName,
-	} = cfg.github!;
-	const githubToken = cfg.githubToken;
-
-	// Create the Octokit client once
-	const githubClient = createGitHubClient(githubToken);
-
-	let fileContent: string;
-	let fileSha: string;
-
-	try {
-		const { content, sha } = await getGitHubFileContent(
-			githubClient, // Pass the client
-			githubRepoOwner,
-			githubRepoName,
-			githubFilePath,
-			githubBranchName
-		);
-		fileContent = content;
-		fileSha = sha;
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			if (error.message.includes('File not found')) {
-				console.warn(`File ${githubFilePath} not found. Creating new file.`);
-				fileContent = '';
-				fileSha = ''; // No SHA for a new file
-			} else {
-				throw new Error(`Failed to retrieve file content: ${error.message}`);
-			}
-		}
-		throw error;
-	}
-
-	// Process the file content
-	const updatedContent = processFile(new Date(), fileContent, newContent);
-
-	// 7. Update the file in the repository
-	try {
-		await updateGitHubFileContent(
-			githubClient, // Pass the client
-			githubRepoOwner,
-			githubRepoName,
-			githubFilePath,
-			githubCommitMessage,
-			updatedContent,
-			fileSha, // Pass empty string if new file, otherwise the existing SHA
-			githubBranchName
-		);
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			throw new Error(`Failed to sync up file: ${error.message}`);
-		}
-		throw new Error(`Failed to sync up file: ${error}`);
-	}
 }

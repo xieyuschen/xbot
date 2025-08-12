@@ -1,8 +1,9 @@
 import { Command, CommandRequest } from '../types';
-import { Config, guardEmpty } from '../utils/config';
-import { FmpQuote, formatFmpDataForTelegram, getQuote } from '../utils/fmp';
+import { Config } from '../utils/config';
+import { FmpQuote, formatFmpDataForTelegram } from '../utils/fmp';
 import { Commander } from '../utils/commader';
 import { Registerable } from '../utils/registry';
+import { MARKDOWN_V2 } from '../utils/telegram';
 
 type StringKeysOf<T> = {
 	[K in keyof T]: T[K] extends string ? K : never;
@@ -29,7 +30,6 @@ export class BasicCmd implements Command, Registerable {
 	async run(req: CommandRequest) {
 		const { trimedText: messageText } = req;
 		const cfg = this.cfg;
-		guardEmpty(cfg.fmpAPIKey, 'FMP_API_KEY', 'env');
 		const shareList = messageText === '' ? cfg[this.cfgFieldName] : messageText;
 		const symbolsToFetch = shareList
 			.split(';')
@@ -48,10 +48,9 @@ export class BasicCmd implements Command, Registerable {
 		try {
 			const fetchedQuotes: FmpQuote[] = [];
 			const failedSymbols: string[] = [];
-			// Loop through each symbol and fetch its data
 			for (const symbol of symbolsToFetch) {
 				try {
-					const quote = await getQuote(cfg, symbol);
+					const quote = await this.cmd.fmp_client().getQuote(symbol);
 					if (quote) {
 						fetchedQuotes.push(quote);
 					} else {
@@ -69,9 +68,7 @@ export class BasicCmd implements Command, Registerable {
 					`Daily ${this.cmdName} Update`,
 					fetchedQuotes
 				);
-				await this.cmd
-					.telegram_client()
-					.sendTelegramMessage(info, 'MarkdownV2');
+				await this.cmd.telegram_client().sendTelegramMessage(info, MARKDOWN_V2);
 			}
 
 			if (failedSymbols.length > 0) {

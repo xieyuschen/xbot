@@ -1,5 +1,6 @@
 // src/utils/telegram.ts
 
+export const MARKDOWN_V2 = 'MarkdownV2';
 export class TelegramClient {
 	static API_URL: string = 'https://api.telegram.org';
 	requestUrl: string;
