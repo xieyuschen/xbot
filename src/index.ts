@@ -20,4 +20,15 @@ export default {
 		await commander.create();
 		return await commander.serveTelegramMessages(request);
 	},
+
+	async email(
+		message: ForwardableEmailMessage,
+		env: TypedEnv,
+		ctx: ExecutionContext
+	) {
+		const registry = new Registry();
+		const commander = new Commander(env, registry);
+		await commander.create();
+		return await commander.serveEmail(message, env, ctx);
+	},
 };
