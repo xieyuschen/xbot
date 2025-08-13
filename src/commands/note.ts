@@ -1,6 +1,5 @@
 import { Registerable } from '../utils/registry';
 import { Command, CommandRequest } from '../types';
-import { guardEmpty, newGithubScret } from '../utils/config';
 import { Commander } from '../utils/commader';
 
 export class NoteCommand implements Command, Registerable {
@@ -21,10 +20,6 @@ export class NoteCommand implements Command, Registerable {
 			return new Response('OK', { status: 200 });
 		}
 		try {
-			const cfg = this.cmd.config();
-			cfg.github = await newGithubScret(cfg.KV_BINDING);
-			guardEmpty(cfg.githubToken, 'GITHUB_TOKEN', 'env');
-
 			await this.cmd.github_client().addContentToGitHubFile(messageText);
 			const messageId = telegramUpdate!.message?.message_id;
 			if (messageId === undefined) {
