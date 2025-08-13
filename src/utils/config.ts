@@ -75,9 +75,10 @@ export class Common {
 
 		guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
 		const gptmodel = await kv.get('GPT_MODEL');
+		const github = await newGithubSecret(kv);
 		this.cfg = {
 			...this.secrets,
-			github: null,
+			github: github,
 			gptModel: gptmodel,
 			KV_BINDING: kv,
 			allowedUserId: parseInt(allowedUserId, 10),
@@ -113,7 +114,7 @@ function newSecret(env: TypedEnv): Secrets {
 	};
 }
 
-export async function newGithubScret(kv: KVNamespace): Promise<GithubConfig> {
+export async function newGithubSecret(kv: KVNamespace): Promise<GithubConfig> {
 	const githubRepoOwner = await kv.get('GITHUB_REPO_OWNER');
 	const githubRepoName = await kv.get('GITHUB_REPO_NAME');
 	const githubFilePath = await kv.get('GITHUB_FILE_PATH');
