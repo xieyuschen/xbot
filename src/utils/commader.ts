@@ -10,6 +10,8 @@ import { ForexCommand } from '../commands/forex';
 import { StartCommand } from '../commands/start';
 import { GithubClient } from './github';
 import { FmpClient } from './fmp';
+import { verification_code } from './verification';
+import PostalMime from 'postal-mime';
 
 export class Commander extends Common {
 	private telegramClient: TelegramClient | null = null;
@@ -179,5 +181,42 @@ export class Commander extends Common {
 			.catch((error: unknown) => {
 				console.error(`Error executing scheduled stock command: ${error}`);
 			});
+	}
+	public async serveEmail(
+		message: ForwardableEmailMessage,
+		_env: TypedEnv,
+		_ctx: ExecutionContext
+	) {
+		const to = message.to;
+		const from = message.from;
+
+		const parser = new PostalMime();
+		const parsedEmail = await parser.parse(message.raw);
+		const textContent = parsedEmail.text;
+		const htmlContent = parsedEmail.html;
+		console.log(`Email from ${from} to ${to}: 
+			title: ${parsedEmail.subject || 'No Subject'},
+			text: ${textContent || 'N/A'},
+			html: ${htmlContent || 'N/A'}
+		`);
+
+		const verificationCode = verification_code(
+			htmlContent || textContent || ''
+		);
+		if (verificationCode) {
+			console.log(`Verification code found: ${verificationCode}`);
+			await this.telegram_client().sendTelegramMessage(
+				`${from}: send to ${to}: ${verificationCode}`
+			);
+		}
+
+		if (this.config().forwardEmail) {
+			await message.forward(this.config().forwardEmail);
+			console.log(`Email forwarded to ${this.config().forwardEmail}`);
+		} else {
+			console.warn('No forward email configured, skipping forwarding');
+		}
+
+		return new Response('OK', { status: 200 });
 	}
 }

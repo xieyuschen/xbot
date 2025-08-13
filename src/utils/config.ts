@@ -19,6 +19,7 @@ export interface Secrets {
 export interface Config extends Secrets {
 	github: GithubConfig | null;
 	gptModel: string | null;
+	forwardEmail: string;
 	allowedUserId: number;
 	stockSymbols: string;
 	forexSymbols: string;
@@ -68,12 +69,11 @@ export class Common {
 			throw new Error('ALLOWED_USER_ID must be a valid number');
 		}
 
-		const stockSymbols = await kv.get('STOCK_SYMBOLS');
-		const symbol = stockSymbols === null ? '' : stockSymbols;
-		const forex = await kv.get('FOREX_SYMBOLS');
-		const forexes = forex === null ? '' : forex;
+		const symbol = (await kv.get('STOCK_SYMBOLS')) || '';
+		const forexes = (await kv.get('FOREX_SYMBOLS')) || '';
 
-		guardEmpty(stockSymbols, 'STOCK_SYMBOLS', 'kv namespace');
+		const forwardEmail = (await kv.get('FORWARD_EMAIL')) || '';
+
 		const gptmodel = await kv.get('GPT_MODEL');
 		const github = await newGithubSecret(kv);
 		this.cfg = {
@@ -84,6 +84,7 @@ export class Common {
 			allowedUserId: parseInt(allowedUserId, 10),
 			stockSymbols: symbol,
 			forexSymbols: forexes,
+			forwardEmail: forwardEmail,
 		};
 	}
 
