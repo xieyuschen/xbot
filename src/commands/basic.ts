@@ -39,7 +39,7 @@ export class BasicCmd implements Command, Registerable {
 		if (symbolsToFetch.length === 0) {
 			await this.cmd
 				.telegram_client()
-				.sendTelegramMessage(
+				.sendMessage(
 					'No valid symbols provided. E.g., `/${this.cmdName} ${this.symbolExample}`'
 				);
 			return new Response('OK', { status: 200 });
@@ -68,13 +68,13 @@ export class BasicCmd implements Command, Registerable {
 					`Daily ${this.cmdName} Update`,
 					fetchedQuotes
 				);
-				await this.cmd.telegram_client().sendTelegramMessage(info, MARKDOWN_V2);
+				await this.cmd.telegram_client().sendMessage(info, MARKDOWN_V2);
 			}
 
 			if (failedSymbols.length > 0) {
 				await this.cmd
 					.telegram_client()
-					.sendTelegramMessage(
+					.sendMessage(
 						'No information could be retrieved for the provided symbols.'
 					);
 			}
@@ -83,7 +83,7 @@ export class BasicCmd implements Command, Registerable {
 			// This catch block handles errors from the overall execution, not just individual symbol fetches
 			console.error('Error occurred while fetching info:', error);
 			const errorMessage = `Failed to get information. Please try again later. (Error: ${String(error) || 'Unknown error'})`;
-			await this.cmd.telegram_client().sendTelegramMessage(errorMessage);
+			await this.cmd.telegram_client().sendMessage(errorMessage);
 			return new Response('Internal Server Error', { status: 200 }); // Return 200 to Telegram
 		}
 	}
@@ -92,7 +92,7 @@ export class BasicCmd implements Command, Registerable {
 		const symbols = await this.cfg.KV_BINDING.get(this.kvKey);
 		this.cmd
 			.telegram_client()
-			.sendTelegramMessage(`Symbols ${symbols} are watching now.`);
+			.sendMessage(`Symbols ${symbols} are watching now.`);
 		return new Response('OK', { status: 200 });
 	}
 
@@ -105,7 +105,7 @@ export class BasicCmd implements Command, Registerable {
 		if (!input) {
 			await this.cmd
 				.telegram_client()
-				.sendTelegramMessage(
+				.sendMessage(
 					'Please provide a symbol to add. E.g., `/${this.cmdName} add ${this.symbolExample}`'
 				);
 			return new Response('OK', { status: 200 });
@@ -119,7 +119,7 @@ export class BasicCmd implements Command, Registerable {
 		await this.cfg.KV_BINDING.put(this.kvKey, nsym.join(';'));
 		await this.cmd
 			.telegram_client()
-			.sendTelegramMessage(`Symbol ${input} added to your watchlist.`);
+			.sendMessage(`Symbol ${input} added to your watchlist.`);
 		return new Response('OK', { status: 200 });
 	}
 
@@ -132,7 +132,7 @@ export class BasicCmd implements Command, Registerable {
 		if (!input) {
 			await this.cmd
 				.telegram_client()
-				.sendTelegramMessage(
+				.sendMessage(
 					'Please provide a symbol to remove. E.g., `/${this.cmdName} remove <symbol>`'
 				);
 			return new Response('OK', { status: 200 });
@@ -144,7 +144,7 @@ export class BasicCmd implements Command, Registerable {
 			await this.cfg.KV_BINDING.put(this.kvKey, nsym.join(';'));
 			await this.cmd
 				.telegram_client()
-				.sendTelegramMessage(
+				.sendMessage(
 					`Symbol ${symbolsToRemove} are removed from your watchlist.`
 				);
 		}

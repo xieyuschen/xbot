@@ -23,12 +23,12 @@ export class LlmCommand implements Command, Registerable {
 			const gptResponse = (await openaiClient.generateResponse(
 				gptRequest
 			)) as string;
-			await this.cmd.telegram_client().sendTelegramMessage(gptResponse);
+			await this.cmd.telegram_client().sendMessage(gptResponse);
 		} catch (error) {
 			console.error('Error calling GPT API:', error);
 			await this.cmd
 				.telegram_client()
-				.sendTelegramMessage(
+				.sendMessage(
 					`Sorry, I couldn't get a response from the GPT model: ${error}`
 				);
 		}

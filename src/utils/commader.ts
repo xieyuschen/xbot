@@ -12,6 +12,7 @@ import { GithubClient } from './github';
 import { FmpClient } from './fmp';
 import { verification_code } from './verification';
 import PostalMime from 'postal-mime';
+import { ImageCommand } from '../commands/image';
 
 export class Commander extends Common {
 	private telegramClient: TelegramClient | null = null;
@@ -26,6 +27,7 @@ export class Commander extends Common {
 		StockCommand,
 		ForexCommand,
 		StartCommand,
+		ImageCommand,
 	];
 
 	constructor(env: TypedEnv, registry: Registry) {
@@ -106,12 +108,11 @@ export class Commander extends Common {
 		}
 
 		const update: TelegramUpdate = await request.json();
-		const chatId = update.message?.chat?.id;
-		const messageText = update.message?.text;
-		const userId = update.message?.from?.id;
+		const chatId = update.message.chat?.id;
+		const userId = update.message.from?.id;
 
 		// If essential message details are missing, return OK without further action.
-		if (!chatId || !messageText) {
+		if (!chatId) {
 			throw new Error('No valid message or chat ID found');
 		}
 
@@ -125,13 +126,15 @@ export class Commander extends Common {
 	public async serveTelegramMessages(request: Request): Promise<Response> {
 		try {
 			const update: TelegramUpdate = await this.guard(request);
-			if (!update.message || !update.message.text) {
-				throw new Error(
-					'telegram update(message or message.text is undefined) is invalid'
-				);
+			if (update.message.photo != undefined) {
+				const cmdHandler = this.registry.findCommand(['image']);
+				return await cmdHandler({
+					trimedText: '',
+					telegramUpdate: update,
+				});
 			}
-			let messageText = update.message.text!;
 
+			let messageText = update.message.text!;
 			let arr: string[] = [];
 			if (messageText.startsWith('/')) {
 				const parts = messageText.split(' ');
@@ -141,7 +144,6 @@ export class Commander extends Common {
 				// trim the top command and pass it to a handler.
 				messageText = messageText.replace(`${start}`, '').trim();
 			}
-
 			const cmdHandler = this.registry.findCommand(arr);
 			return await cmdHandler({
 				trimedText: messageText,
@@ -164,8 +166,9 @@ export class Commander extends Common {
 
 	public async serveCronJob() {
 		const cfg = this.config();
-		await this.registry
-			.findCommand(['stock'])({ trimedText: cfg.stockSymbols })
+		await this.registry.findCommand(['stock'])!({
+			trimedText: cfg.stockSymbols,
+		})
 			.then(() => {
 				console.log('Scheduled stock command executed successfully');
 			})
@@ -173,8 +176,9 @@ export class Commander extends Common {
 				console.error(`Error executing scheduled stock command: ${error}`);
 			});
 
-		await this.registry
-			.findCommand(['forex'])({ trimedText: cfg.forexSymbols })
+		await this.registry.findCommand(['forex'])!({
+			trimedText: cfg.forexSymbols,
+		})
 			.then(() => {
 				console.log('Scheduled forex command executed successfully');
 			})
@@ -205,7 +209,7 @@ export class Commander extends Common {
 		);
 		if (verificationCode) {
 			console.log(`Verification code found: ${verificationCode}`);
-			await this.telegram_client().sendTelegramMessage(
+			await this.telegram_client().sendMessage(
 				`${from}: send to ${to}: ${verificationCode}`
 			);
 		}

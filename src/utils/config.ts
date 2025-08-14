@@ -24,6 +24,7 @@ export interface Config extends Secrets {
 	stockSymbols: string;
 	forexSymbols: string;
 	KV_BINDING: KVNamespace;
+	WEBSITE_BUCKET: R2Bucket;
 }
 
 export interface GithubConfig {
@@ -81,6 +82,7 @@ export class Common {
 			github: github,
 			gptModel: gptmodel,
 			KV_BINDING: kv,
+			WEBSITE_BUCKET: this.env.WEBSITE_BUCKET,
 			allowedUserId: parseInt(allowedUserId, 10),
 			stockSymbols: symbol,
 			forexSymbols: forexes,
