@@ -11,13 +11,14 @@ export interface TypedEnv {
 	FMP_API_KEY: string;
 	OPEN_AI_API_KEY: string; // OpenAI API key for GPT commands
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
+	WEBSITE_BUCKET: R2Bucket; // R2 bucket for static website hosting
 }
 
 /**
  * Represents a simplified Telegram message update.
  */
 export interface TelegramUpdate {
-	message?: {
+	message: {
 		message_id: number;
 		chat: {
 			id: number;
@@ -26,8 +27,13 @@ export interface TelegramUpdate {
 		from?: {
 			id: number;
 		};
+		photo?: Array<{
+			file_id: string;
+			file_unique_id: string;
+			width: number;
+			height: number;
+		}>;
 	};
-	// Add other Telegram update types if needed (e.g., callback_query, channel_post)
 }
 
 export interface CommandRequest {

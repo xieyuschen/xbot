@@ -17,7 +17,7 @@ export class HelpCommand implements Command, Registerable {
 			.join('\n');
 		responseText += `\n/help - ${this.description}`;
 
-		await this.cmd.telegram_client().sendTelegramMessage(responseText);
+		await this.cmd.telegram_client().sendMessage(responseText);
 
 		// Set bot commands for Telegram clients (so "/" shows suggestions)
 		const commandsForTelegram = [

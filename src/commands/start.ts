@@ -22,7 +22,7 @@ export class StartCommand implements Command, Registerable {
 		console.log(
 			'run this.cmd.telegram_client().sendTelegramMessage(responseText);'
 		);
-		await this.cmd.telegram_client().sendTelegramMessage(responseText);
+		await this.cmd.telegram_client().sendMessage(responseText);
 		return new Response('OK', { status: 200 });
 	}
 }

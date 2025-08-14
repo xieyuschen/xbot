@@ -10,10 +10,20 @@
 	"observability": {
 		"enabled": true,
 	},
+	"compatibility_flags": ["nodejs_compat"],
 	"kv_namespaces": [
 		{
+			// KV Binding is used to store some configuration keys,
+			// it's used as a place to maintian states for the severless xbot.
 			"binding": "KV_BINDING",
 			"id": "660ba3cb4cf241ce87a3f306f701e604",
+		},
+	],
+	"r2_buckets": [
+		{
+			"binding": "WEBSITE_BUCKET",
+			// the bucket is used to store images that I want to upload.
+			"bucket_name": "website",
 		},
 	],
 }

@@ -21,17 +21,17 @@ export class NoteCommand implements Command, Registerable {
 		}
 		try {
 			await this.cmd.github_client().addContentToGitHubFile(messageText);
-			const messageId = telegramUpdate!.message?.message_id;
+			const messageId = telegramUpdate!.message.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
 			}
-			await this.cmd.telegram_client().sendTelegramReaction(messageId);
+			await this.cmd.telegram_client().setMessageReaction(messageId);
 			return new Response('OK', { status: 200 });
 		} catch (error: unknown) {
 			// Log the error for debugging
 			console.error('Error occurred while recording note:', error);
 			const errorMessage = `Failed to record your note. Please try again later. (Error: ${String(error) || 'Unknown error'})`;
-			await this.cmd.telegram_client().sendTelegramMessage(errorMessage);
+			await this.cmd.telegram_client().sendMessage(errorMessage);
 			return new Response('Internal Server Error', { status: 200 });
 		}
 	}
