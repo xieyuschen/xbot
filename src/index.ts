@@ -8,17 +8,13 @@ export default {
 		env: TypedEnv,
 		_ctx: ExecutionContext
 	) {
-		const registry = new Registry();
-		const commander = new Commander(env, registry);
-		await commander.create();
+		const commander = new Commander(env, new Registry());
 		return await commander.serveCronJob();
 	},
 
 	async fetch(request: Request, env: TypedEnv): Promise<Response> {
-		const registry = new Registry();
-		const commander = new Commander(env, registry);
-		await commander.create();
-		return await commander.serveTelegramMessages(request);
+		const commander = new Commander(env, new Registry());
+		return await commander.serve(request);
 	},
 
 	async email(
@@ -26,9 +22,7 @@ export default {
 		env: TypedEnv,
 		ctx: ExecutionContext
 	) {
-		const registry = new Registry();
-		const commander = new Commander(env, registry);
-		await commander.create();
+		const commander = new Commander(env, new Registry());
 		return await commander.serveEmail(message, env, ctx);
 	},
 };
