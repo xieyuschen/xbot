@@ -13,6 +13,8 @@ import { FmpClient } from './fmp';
 import { verification_code } from './verification';
 import PostalMime from 'postal-mime';
 import { ImageCommand } from '../commands/image';
+import { Hono } from 'hono';
+import { PoeRequest, PoeResponse } from './poe';
 
 export class Commander extends Common {
 	private telegramClient: TelegramClient | null = null;
@@ -33,6 +35,20 @@ export class Commander extends Common {
 	constructor(env: TypedEnv, registry: Registry) {
 		super(env);
 		this.registry = registry;
+	}
+	public async serve(request: Request): Promise<Response> {
+		await this.create();
+		const app = new Hono();
+		app.all('/', async (c) => {
+			return await this.serveTelegramMessages(c.req.raw);
+		});
+		app.all('/telegram', async (c) => {
+			return await this.serveTelegramMessages(c.req.raw);
+		});
+		app.all('/poe', async (c) => {
+			return await this.servePoe(c.req.raw);
+		});
+		return app.fetch(request);
 	}
 
 	async create() {
@@ -94,7 +110,7 @@ export class Commander extends Common {
 		return this.telegramClient;
 	}
 
-	async guard(request: Request): Promise<TelegramUpdate> {
+	private async guard(request: Request): Promise<TelegramUpdate> {
 		// Only process POST requests, as Telegram sends updates via POST.
 		if (request.method !== 'POST') {
 			throw new Error('Telegram Bot is running on Cloudflare Workers');
@@ -123,7 +139,45 @@ export class Commander extends Common {
 		return update;
 	}
 
-	public async serveTelegramMessages(request: Request): Promise<Response> {
+	private async servePoe(request: Request): Promise<Response> {
+		const req: PoeRequest = await request.json();
+		// use the last query in the request as the question
+		const question = req.query?.[req.query?.length - 1]?.content || '';
+		const stream = new ReadableStream({
+			async start(controller) {
+				const encoder = new TextEncoder();
+				const sendEvent = (eventName: string, data: object) => {
+					const eventString = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+					controller.enqueue(encoder.encode(eventString));
+				};
+				if (question) {
+					const words = question.split(' ');
+					for (const word of words) {
+						const response: PoeResponse = {
+							text: word + ' ',
+						};
+						sendEvent('text', response);
+						await new Promise((resolve) => setTimeout(resolve, 50));
+					}
+				}
+
+				sendEvent('done', {});
+				controller.close();
+			},
+		});
+
+		// Return a new Response object with the stream and the correct SSE headers.
+		return new Response(stream, {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/event-stream',
+				'Cache-Control': 'no-cache',
+				Connection: 'keep-alive',
+			},
+		});
+	}
+
+	private async serveTelegramMessages(request: Request): Promise<Response> {
 		try {
 			const update: TelegramUpdate = await this.guard(request);
 			if (update.message.photo != undefined) {
@@ -165,6 +219,7 @@ export class Commander extends Common {
 	}
 
 	public async serveCronJob() {
+		await this.create();
 		const cfg = this.config();
 		await this.registry.findCommand(['stock'])!({
 			trimedText: cfg.stockSymbols,
@@ -186,11 +241,13 @@ export class Commander extends Common {
 				console.error(`Error executing scheduled stock command: ${error}`);
 			});
 	}
+
 	public async serveEmail(
 		message: ForwardableEmailMessage,
 		_env: TypedEnv,
 		_ctx: ExecutionContext
 	) {
+		await this.create();
 		const to = message.to;
 		const from = message.from;
 
