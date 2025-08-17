@@ -10,6 +10,8 @@ export interface TypedEnv {
 	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
 	FMP_API_KEY: string;
 	OPEN_AI_API_KEY: string; // OpenAI API key for GPT commands
+	POE_API_KEY: string; // Poe.com key for GPT commands
+	POE_BOT_ACCESS_KEY: string;
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
 	WEBSITE_BUCKET: R2Bucket; // R2 bucket for static website hosting
 }

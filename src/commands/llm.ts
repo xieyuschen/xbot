@@ -1,4 +1,4 @@
-import { ChatGPTRequest, GPT_4O_MINI, OpenAIClient } from '../utils/gpt';
+import { ChatGPTRequest, GEMINI_20_FLASH, LLMClient } from '../utils/gpt';
 import { Command, CommandRequest } from '../types';
 import { Registerable } from '../utils/registry';
 import { guardEmpty } from '../utils/config';
@@ -13,9 +13,9 @@ export class LlmCommand implements Command, Registerable {
 		const { trimedText: messageText } = req;
 		const cfg = this.cmd.config();
 		guardEmpty(cfg.openaiApiKey, 'OPEN_AI_API_KEY', 'env');
-		const openaiClient = new OpenAIClient(cfg.openaiApiKey);
+		const openaiClient = new LLMClient(cfg.openaiApiKey, cfg.poeApiKey);
 		const gptRequest: ChatGPTRequest = {
-			model: cfg.gptModel || GPT_4O_MINI,
+			model: cfg.gptModel || GEMINI_20_FLASH,
 			messages: [{ role: 'user', content: messageText }],
 		};
 
