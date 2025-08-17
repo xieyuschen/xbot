@@ -18,11 +18,6 @@ import { PoeRequest, PoeResponse } from './poe';
 import { LLMClient } from './gpt';
 
 export class Commander extends Common {
-	private telegramClient: TelegramClient | null = null;
-	private githubClient: GithubClient | null = null;
-	private fmpClient: FmpClient | null = null;
-	public registry: Registry;
-
 	private commands = [
 		HelpCommand,
 		LlmCommand,
@@ -32,7 +27,10 @@ export class Commander extends Common {
 		StartCommand,
 		ImageCommand,
 	];
-
+	private telegramClient: TelegramClient | null = null;
+	private githubClient: GithubClient | null = null;
+	private fmpClient: FmpClient | null = null;
+	public registry: Registry;
 	constructor(env: TypedEnv, registry: Registry) {
 		super(env);
 		this.registry = registry;

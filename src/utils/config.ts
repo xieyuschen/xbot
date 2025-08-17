@@ -1,5 +1,18 @@
 import { TypedEnv } from '../types';
 
+enum KV_CONFIG_KEY {
+	ALLOWED_USER_ID = 'ALLOWED_USER_ID',
+	STOCK_SYMBOLS = 'STOCK_SYMBOLS',
+	FOREX_SYMBOLS = 'FOREX_SYMBOLS',
+	FORWARD_EMAIL = 'FORWARD_EMAIL',
+	GPT_MODEL = 'GPT_MODEL',
+	GITHUB_REPO_OWNER = 'GITHUB_REPO_OWNER',
+	GITHUB_REPO_NAME = 'GITHUB_REPO_NAME',
+	GITHUB_FILE_PATH = 'GITHUB_FILE_PATH',
+	GITHUB_COMMIT_MESSAGE = 'GITHUB_COMMIT_MESSAGE',
+	GITHUB_BRANCH_NAME = 'GITHUB_BRANCH_NAME',
+}
+
 /**
  * Represents the secrets used in the application.
  * These should be strictly defined in the environment variables.
@@ -66,18 +79,18 @@ export class Common {
 	protected async create() {
 		const kv = this.env.KV_BINDING;
 
-		const allowedUserId = await kv.get('ALLOWED_USER_ID');
-		guardEmpty(allowedUserId, 'ALLOWED_USER_ID', 'kv namespace');
+		const allowedUserId = await kv.get(KV_CONFIG_KEY.ALLOWED_USER_ID);
+		guardEmpty(allowedUserId, KV_CONFIG_KEY.ALLOWED_USER_ID, 'kv namespace');
 		if (isNaN(parseInt(allowedUserId, 10))) {
 			throw new Error('ALLOWED_USER_ID must be a valid number');
 		}
 
-		const symbol = (await kv.get('STOCK_SYMBOLS')) || '';
-		const forexes = (await kv.get('FOREX_SYMBOLS')) || '';
+		const symbol = (await kv.get(KV_CONFIG_KEY.STOCK_SYMBOLS)) || '';
+		const forexes = (await kv.get(KV_CONFIG_KEY.FOREX_SYMBOLS)) || '';
 
-		const forwardEmail = (await kv.get('FORWARD_EMAIL')) || '';
+		const forwardEmail = (await kv.get(KV_CONFIG_KEY.FORWARD_EMAIL)) || '';
 
-		const gptmodel = await kv.get('GPT_MODEL');
+		const gptmodel = await kv.get(KV_CONFIG_KEY.GPT_MODEL);
 		const github = await newGithubSecret(kv);
 		this.cfg = {
 			...this.secrets,
@@ -122,21 +135,37 @@ function newSecret(env: TypedEnv): Secrets {
 }
 
 export async function newGithubSecret(kv: KVNamespace): Promise<GithubConfig> {
-	const githubRepoOwner = await kv.get('GITHUB_REPO_OWNER');
-	const githubRepoName = await kv.get('GITHUB_REPO_NAME');
-	const githubFilePath = await kv.get('GITHUB_FILE_PATH');
-	const githubCommitMessage = await kv.get('GITHUB_COMMIT_MESSAGE');
-	const githubBranchName = await kv.get('GITHUB_BRANCH_NAME');
-	guardEmpty(githubRepoOwner, 'GITHUB_REPO_OWNER', 'kv namespace');
-	guardEmpty(githubRepoName, 'GITHUB_REPO_NAME', 'kv namespace');
-	guardEmpty(githubFilePath, 'GITHUB_FILE_PATH', 'kv namespace');
-	guardEmpty(githubCommitMessage, 'GITHUB_COMMIT_MESSAGE', 'kv namespace');
-	guardEmpty(githubBranchName, 'GITHUB_BRANCH_NAME', 'kv namespace');
+	const keysToFetch = [
+		KV_CONFIG_KEY.GITHUB_REPO_OWNER,
+		KV_CONFIG_KEY.GITHUB_REPO_NAME,
+		KV_CONFIG_KEY.GITHUB_FILE_PATH,
+		KV_CONFIG_KEY.GITHUB_COMMIT_MESSAGE,
+		KV_CONFIG_KEY.GITHUB_BRANCH_NAME,
+	];
+
+	// Fetch all required keys from KV and validate
+	const values = await Promise.all(
+		keysToFetch.map(async (key) => {
+			const value = await kv.get(key);
+			guardEmpty(value, key, 'kv namespace');
+			return value;
+		})
+	);
+
+	// Construct and return the config object
+	const [
+		githubRepoOwner,
+		githubRepoName,
+		githubFilePath,
+		githubCommitMessage,
+		githubBranchName,
+	] = values;
+
 	return {
-		githubRepoOwner: githubRepoOwner,
-		githubRepoName: githubRepoName,
-		githubFilePath: githubFilePath,
-		githubCommitMessage: githubCommitMessage,
-		githubBranchName: githubBranchName,
+		githubRepoOwner,
+		githubRepoName,
+		githubFilePath,
+		githubCommitMessage,
+		githubBranchName,
 	};
 }

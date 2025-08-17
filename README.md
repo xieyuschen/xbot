@@ -4,13 +4,7 @@ Xbot is a telegram bot running inside cloudflare worker for personal usages.
 
 ## Feature
 
-- `note`: append the input to a specified github repo branch file, it's used for me to add my daily whispers and random thoughts.
-- `stock`: show the changes of a stock, separated by `;`.
-  - `add`: add a symbol to watch.
-  - `list`: list all watched symbols.
-  - `remove`: remove some symbols, allow to remove in a batch seperated by `;`.
-- `help`: a command to print all available commands.
-
+All commands are put [src/utils/commader.ts](src/utils/commader.ts#L21).
 If no commands is provided, the bot will note it down by default.
 
 ## Setting up
@@ -27,31 +21,18 @@ See the [install and update](https://developers.cloudflare.com/workers/wrangler/
 
 Basically, you need to `wrangler login` and try `npm run deploy`, the wrangler will help you to create a worker.
 
-Then, xbot requires some secrets and setting up to start.
+Some secrets are required to run xbot, the secrets are defined at [TypedEnv](./src/types.ts#L7):
 
 ```
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put GITHUB_TOKEN
-# this is used to ensure the request comes from the real telegram, rather than a malicous attacker.
-npx wrangler secret put TELEGRAM_SECRET_TOKEN
-npx wrangler secret put FMP_API_KEY
+npx wrangler secret put <ENV_KEY_NAME>
 ```
 
 Thenm put some configurations inside bound [cloudflare kv storage](https://developers.cloudflare.com/kv/).
 To use your own cloudflare kv, you need to change the `id` filed of `kv_namespaces` in `wrangler.jsonc`.
 
-Besides, github configuration fields are not compulsory if you don't use github related features.
-`ALLOWED_USER_ID` is used to limit only you can use your own bot, you can retrieve your telegram user id via some bots,
-e.g, [getidbot](https://t.me/getidsbot).
+Some of the configuration are put inside kv because they're not sensitive.
 
-```
-GITHUB_REPO_OWNER
-GITHUB_REPO_NAME
-GITHUB_FILE_PATH
-GITHUB_COMMIT_MESSAGE
-GITHUB_BRANCH_NAME
-ALLOWED_USER_ID
-```
+See [enum KV_CONFIG_KEY](./src/utils/config.ts#L3)
 
 ### 3. Deploy and Update Telegram Hook
 
@@ -71,11 +52,10 @@ head -c 1024 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 64; echo
 ```
 
 ```sh
-
-
 export TELEGRAM_BOT_TOKEN="the secret you set to TELEGRAM_BOT_TOKEN"
 export TELEGRAM_SECRET_TOKEN="the secret you set to TELEGRAM_SECRET_TOKEN"
-export XBOT_DOMAIN="https://xbot.dangui.org/"
+# you may use your own domain with path /telegram
+export XBOT_DOMAIN="https://xbot.dangui.org/telegram"
 
 curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
      -F "url=${XBOT_DOMAIN}" \
@@ -83,9 +63,3 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 ```
 
 After all setting up, you need to run `npm run deploy` again and then you can use your bot via telegram.
-
-## Dev
-
-```
-npx prettier --write "**/*.ts"
-```
