@@ -15,6 +15,7 @@ import PostalMime from 'postal-mime';
 import { ImageCommand } from '../commands/image';
 import { Hono } from 'hono';
 import { PoeRequest, PoeResponse } from './poe';
+import { LLMClient } from './gpt';
 
 export class Commander extends Common {
 	private telegramClient: TelegramClient | null = null;
@@ -46,7 +47,7 @@ export class Commander extends Common {
 			return await this.serveTelegramMessages(c.req.raw);
 		});
 		app.all('/poe', async (c) => {
-			return await this.servePoe(c.req.raw);
+			return await this.servePoeBot(c.req.raw);
 		});
 		return app.fetch(request);
 	}
@@ -139,10 +140,43 @@ export class Commander extends Common {
 		return update;
 	}
 
-	private async servePoe(request: Request): Promise<Response> {
+	// guardPoeTrustedSource ensures the requests come from the poe platform, see:
+	// https://creator.poe.com/docs/server-bots/poe-protocol-specification#authentication
+	guardPoeTrustedSource(req: Request): boolean {
+		const authHeader = req.headers.get('authorization');
+		if (!authHeader || !authHeader.startsWith('Bearer ')) {
+			return false;
+		}
+
+		const token = authHeader.split(' ')[1];
+		return token === this.config().poeBotAccessToken;
+	}
+
+	// servePoeBot serves the bot created by poe creator.
+	// https://creator.poe.com/docs/
+	private async servePoeBot(request: Request): Promise<Response> {
+		if (!this.guardPoeTrustedSource(request)) {
+			console.error('fail to validate the reuqest comes from a trusted origin');
+			return new Response(null, {
+				status: 400,
+			});
+		}
+
+		const llmCli = new LLMClient(
+			this.config().openaiApiKey,
+			this.config().poeApiKey
+		);
 		const req: PoeRequest = await request.json();
 		// use the last query in the request as the question
 		const question = req.query?.[req.query?.length - 1]?.content || '';
+		console.log(question);
+
+		const resp = (await llmCli.generateResponse({
+			messages: [{ role: 'user', content: question }],
+			// todo: value of stream directly affects the return type, how to handle this?
+			stream: true,
+		})) as AsyncIterable<string>;
+
 		const stream = new ReadableStream({
 			async start(controller) {
 				const encoder = new TextEncoder();
@@ -150,19 +184,31 @@ export class Commander extends Common {
 					const eventString = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
 					controller.enqueue(encoder.encode(eventString));
 				};
-				if (question) {
-					const words = question.split(' ');
-					for (const word of words) {
-						const response: PoeResponse = {
-							text: word + ' ',
-						};
-						sendEvent('text', response);
-						await new Promise((resolve) => setTimeout(resolve, 50));
-					}
-				}
 
-				sendEvent('done', {});
-				controller.close();
+				try {
+					// Use a "for await...of" loop to consume the async iterable.
+					// This is the key change to process the actual LLM response.
+					for await (const chunk of resp) {
+						if (chunk) {
+							const responsePayload: PoeResponse = {
+								text: chunk,
+							};
+							sendEvent('text', responsePayload);
+							await new Promise((resolve) => setTimeout(resolve, 50));
+						}
+					}
+				} catch (error) {
+					// It's good practice to handle potential errors during the stream.
+					console.error('Error during stream generation:', error);
+					const errorPayload = {
+						error: 'An error occurred while generating the response.',
+					};
+					sendEvent('error', errorPayload);
+				} finally {
+					// Once the loop is finished, send the 'done' event and close the stream.
+					sendEvent('done', {});
+					controller.close();
+				}
 			},
 		});
 

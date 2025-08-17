@@ -10,6 +10,8 @@ export interface Secrets {
 	githubToken: string;
 	fmpAPIKey: string;
 	openaiApiKey: string;
+	poeApiKey: string;
+	poeBotAccessToken: string;
 }
 
 /**
@@ -114,6 +116,8 @@ function newSecret(env: TypedEnv): Secrets {
 		githubToken: env.GITHUB_TOKEN,
 		fmpAPIKey: env.FMP_API_KEY,
 		openaiApiKey: env.OPEN_AI_API_KEY,
+		poeApiKey: env.POE_API_KEY,
+		poeBotAccessToken: env.POE_BOT_ACCESS_KEY,
 	};
 }
 

@@ -6,31 +6,34 @@ import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'; 
  * This simplifies the `messages` and `model` parameters.
  */
 export interface ChatGPTRequest {
-	model: string; // e.g., "gpt-4o", "gpt-3.5-turbo"
+	model?: string; // e.g., "gpt-4o", "gpt-3.5-turbo"
 	messages: ChatCompletionMessageParam[]; // Array of message objects (role, content)
 	stream?: boolean; // Optional: whether to stream the response
 }
 
-export const GPT_4O_MINI = 'gpt-4o-mini';
+export const GEMINI_20_FLASH = 'gemini-2.0-flash';
 export const TEXT_EMBEDDING = 'text-embedding-ada-002';
 
-export class OpenAIClient {
-	apiKey: string;
+export class LLMClient {
+	// open ai client is used to vectorize requests as poe doesn't have these models.
 	openai: OpenAI;
-	constructor(apiKey: string) {
-		this.apiKey = apiKey;
-		this.openai = new OpenAI({
-			apiKey: apiKey,
+	poe: OpenAI;
+	constructor(openAiApiKey: string, poeApiKey: string) {
+		this.openai = new OpenAI({ apiKey: openAiApiKey });
+		this.poe = new OpenAI({
+			apiKey: poeApiKey,
+			baseURL: 'https://api.poe.com/v1',
 		});
 	}
 	public async generateResponse(
 		request: ChatGPTRequest
 	): Promise<string | AsyncIterable<string>> {
+		const model = request.model || GEMINI_20_FLASH;
 		try {
 			if (request.stream) {
 				// Handle streaming responses
-				const stream = await this.openai.chat.completions.create({
-					model: request.model,
+				const stream = await this.poe.chat.completions.create({
+					model: model,
 					messages: request.messages,
 					stream: true,
 				});
@@ -43,8 +46,8 @@ export class OpenAIClient {
 				})();
 			} else {
 				// Handle non-streaming responses
-				const chatCompletion = await this.openai.chat.completions.create({
-					model: request.model,
+				const chatCompletion = await this.poe.chat.completions.create({
+					model: model,
 					messages: request.messages,
 				});
 
@@ -54,8 +57,8 @@ export class OpenAIClient {
 				);
 			}
 		} catch (error: unknown) {
+			console.error('Error calling OpenAI API:', error);
 			if (error instanceof Error) {
-				console.error('Error calling OpenAI API:', error);
 				throw new Error(
 					`Failed to get response from ChatGPT: ${error.message}`
 				);
