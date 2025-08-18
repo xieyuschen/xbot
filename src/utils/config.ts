@@ -11,6 +11,7 @@ enum KV_CONFIG_KEY {
 	GITHUB_FILE_PATH = 'GITHUB_FILE_PATH',
 	GITHUB_COMMIT_MESSAGE = 'GITHUB_COMMIT_MESSAGE',
 	GITHUB_BRANCH_NAME = 'GITHUB_BRANCH_NAME',
+	R2_DOMAIN_NAME = 'R2_DOMAIN_NAME',
 }
 
 /**
@@ -38,6 +39,8 @@ export interface Config extends Secrets {
 	allowedUserId: number;
 	stockSymbols: string;
 	forexSymbols: string;
+	r2DomainName: string;
+
 	KV_BINDING: KVNamespace;
 	WEBSITE_BUCKET: R2Bucket;
 }
@@ -92,6 +95,7 @@ export class Common {
 
 		const gptmodel = await kv.get(KV_CONFIG_KEY.GPT_MODEL);
 		const github = await newGithubSecret(kv);
+		const r2DomainName = await kv.get(KV_CONFIG_KEY.R2_DOMAIN_NAME);
 		this.cfg = {
 			...this.secrets,
 			github: github,
@@ -102,6 +106,7 @@ export class Common {
 			stockSymbols: symbol,
 			forexSymbols: forexes,
 			forwardEmail: forwardEmail,
+			r2DomainName: r2DomainName || '',
 		};
 	}
 
