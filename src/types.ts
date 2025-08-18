@@ -5,13 +5,28 @@
  * All required variables are listed here.
  */
 export interface TypedEnv {
+	// TELEGRAM_BOT_TOKEN is the token to interact with telegram bot,
+	// the token could be got from bot father.
 	TELEGRAM_BOT_TOKEN: string;
-	TELEGRAM_SECRET_TOKEN: string; // Used to verify requests from Telegram
-	GITHUB_TOKEN: string; // Your GitHub Personal Access Token
+	// TELEGRAM_SECRET_TOKEN is used to ensure the request comes from the real telegram,
+	// rather than a malicous attacker.
+	TELEGRAM_SECRET_TOKEN: string;
+
+	// GITHUB_TOKEN is token to interact with github,
+	// it's not necessary if you don't use any github feature.
+	GITHUB_TOKEN: string;
+	// FMP_API_KEY is the token to interact with https://site.financialmodelingprep.com/
+	// to access finance data.
 	FMP_API_KEY: string;
-	OPEN_AI_API_KEY: string; // OpenAI API key for GPT commands
-	POE_API_KEY: string; // Poe.com key for GPT commands
+	// OpenAI API key for GPT commands
+	OPEN_AI_API_KEY: string;
+	// Poe.com key for GPT commands
+	POE_API_KEY: string;
+	// POE_BOT_ACCESS_KEY is the key to ensure the requests come from poe.com platform,
+	// rather than a untrusted party.
 	POE_BOT_ACCESS_KEY: string;
+
+	/* the fields below are bound by cloudflare when started and they're not config from env*/
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
 	WEBSITE_BUCKET: R2Bucket; // R2 bucket for static website hosting
 }
