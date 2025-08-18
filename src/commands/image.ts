@@ -39,14 +39,19 @@ export class ImageCommand implements Command, Registerable {
 			const ext = path.extname(file.file_path);
 			const id = moment().format('YYYYMMDD_HHmmss') + ext;
 			await this.cmd.config().WEBSITE_BUCKET.put(id, fileBytes);
-			this.cmd
-				.telegram_client()
-				.sendMessage(`Your image has been stored successfully with ID: ${id}`);
+
+			const fileUrl = `${this.cmd.config().r2DomainName}/${id}`;
+			this.cmd.telegram_client().sendMessage(fileUrl);
 			const messageId = telegramUpdate!.message.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
 			}
-			await this.cmd.telegram_client().setMessageReaction(messageId);
+			await this.cmd.telegram_client().deleteMessage(messageId);
+			this.cmd
+				.github_client()
+				.addContentToGitHubFile(
+					`<img src="${fileUrl}" width="200" height="150">`
+				);
 			return new Response('OK', { status: 200 });
 		} catch (error: unknown) {
 			const errorMessage = `Failed to run store image, some internal error happened. Error:\n${String(error) || 'Unknown error'}`;

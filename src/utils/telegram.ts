@@ -101,6 +101,17 @@ export class TelegramClient {
 		});
 	}
 
+	async deleteMessage(messageId: number): Promise<Response> {
+		return fetch(`${this.requestUrl}/deleteMessage`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: this.chatID,
+				message_id: messageId,
+			}),
+		});
+	}
+
 	async setMyCommands(commands: TelegramCommand[]): Promise<Response> {
 		// Call Telegram setMyCommands API
 		return await fetch(`${this.requestUrl}/setMyCommands`, {
