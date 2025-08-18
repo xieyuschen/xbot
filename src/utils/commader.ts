@@ -1,7 +1,12 @@
 import { Common } from './config';
 import { TelegramUpdate, TypedEnv } from '../types';
 import { Registry } from './registry';
-import { TelegramClient } from './telegram';
+import {
+	getAllMessages,
+	recordMessageId,
+	resetMessages,
+	TelegramClient,
+} from './telegram';
 import { HelpCommand } from '../commands/help';
 import { LlmCommand } from '../commands/llm';
 import { NoteCommand } from '../commands/note';
@@ -53,8 +58,8 @@ export class Commander extends Common {
 	async create() {
 		await super.create();
 		this.telegramClient = new TelegramClient(
-			this.env.TELEGRAM_BOT_TOKEN,
-			this.config().allowedUserId.toString()
+			this.config(),
+			this.env.TELEGRAM_BOT_TOKEN
 		);
 		if (this.config().github) {
 			this.githubClient = new GithubClient(
@@ -232,8 +237,14 @@ export class Commander extends Common {
 				});
 			}
 
-			let messageText = update.message.text!;
+			const msg_id = update.message?.message_id;
+			if (msg_id) {
+				// this is duplicated for image upload as it will delete the original image immediately.
+				// but we tolerate it.
+				await recordMessageId(this.config(), msg_id);
+			}
 			let arr: string[] = [];
+			let messageText = update.message.text!;
 			if (messageText.startsWith('/')) {
 				const parts = messageText.split(' ');
 				const start = parts[0].toLowerCase();
@@ -264,7 +275,15 @@ export class Commander extends Common {
 
 	public async serveCronJob() {
 		await this.create();
+
 		const cfg = this.config();
+		const list = await getAllMessages(cfg);
+		await resetMessages(cfg);
+		for (const msg_id of list) {
+			// tolerate the error
+			await this.telegram_client().deleteMessage(Number.parseInt(msg_id));
+		}
+
 		await this.registry.findCommand(['stock'])!({
 			trimedText: cfg.stockSymbols,
 		})

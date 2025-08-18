@@ -1,5 +1,7 @@
 // src/utils/telegram.ts
 
+import { Config, KV_CONFIG_KEY } from './config';
+
 export const MARKDOWN_V2 = 'MarkdownV2';
 interface File {
 	file_id: string;
@@ -11,16 +13,17 @@ interface File {
 export class TelegramClient {
 	static API_URL: string = 'https://api.telegram.org';
 	requestUrl: string;
+	private chatID: string;
 	constructor(
-		private token: string,
-		private chatID: string
+		private cfg: Config,
+		private token: string
 	) {
 		this.requestUrl = `${TelegramClient.API_URL}/bot${token}`;
-		this.chatID = chatID;
+		this.chatID = cfg.allowedUserId.toString();
 	}
 
 	async sendMessage(text: string, parse_mode: string = ''): Promise<Response> {
-		return fetch(`${this.requestUrl}/sendMessage`, {
+		const resp = await fetch(`${this.requestUrl}/sendMessage`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -30,6 +33,17 @@ export class TelegramClient {
 				disable_web_page_preview: true,
 			}),
 		});
+
+		if (!resp.ok) {
+			return resp;
+		}
+		interface ApiResponse {
+			ok: boolean;
+			result: Result; // The result contains the file data
+		}
+		const data: ApiResponse = await resp.clone().json();
+		await recordMessageId(this.cfg, data.result.message_id);
+		return resp;
 	}
 
 	async getFile(fileId: string): Promise<File> {
@@ -122,7 +136,35 @@ export class TelegramClient {
 	}
 }
 
+interface Result {
+	message_id: number;
+}
+
 type TelegramCommand = {
 	command: string;
 	description: string;
 };
+
+// strictly speaking, these 3 functions are wrong due to concurrent issue.
+// but as a fact of matter, in real practice it's unlikely happen so it's acceptable.
+export async function recordMessageId(cfg: Config, msg_id: number) {
+	const list = await getAllMessages(cfg);
+	let newList = `${msg_id}`;
+	if (list.length != 0) {
+		newList = `${list.join(';')};${msg_id}`;
+	}
+
+	await cfg.KV_BINDING.put(KV_CONFIG_KEY.DELETE_MESSAGES_LIST, newList);
+}
+
+export async function resetMessages(cfg: Config) {
+	await cfg.KV_BINDING.put(KV_CONFIG_KEY.DELETE_MESSAGES_LIST, '');
+}
+
+export async function getAllMessages(cfg: Config): Promise<string[]> {
+	const list = await cfg.KV_BINDING.get(KV_CONFIG_KEY.DELETE_MESSAGES_LIST);
+	if (list === null || list === '') {
+		return [];
+	}
+	return list.split(';');
+}

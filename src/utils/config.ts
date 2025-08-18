@@ -1,6 +1,6 @@
 import { TypedEnv } from '../types';
 
-enum KV_CONFIG_KEY {
+export enum KV_CONFIG_KEY {
 	ALLOWED_USER_ID = 'ALLOWED_USER_ID',
 	STOCK_SYMBOLS = 'STOCK_SYMBOLS',
 	FOREX_SYMBOLS = 'FOREX_SYMBOLS',
@@ -12,6 +12,7 @@ enum KV_CONFIG_KEY {
 	GITHUB_COMMIT_MESSAGE = 'GITHUB_COMMIT_MESSAGE',
 	GITHUB_BRANCH_NAME = 'GITHUB_BRANCH_NAME',
 	R2_DOMAIN_NAME = 'R2_DOMAIN_NAME',
+	DELETE_MESSAGES_LIST = 'DELETE_MESSAGES_LIST',
 }
 
 /**
@@ -44,7 +45,6 @@ export interface Config extends Secrets {
 	KV_BINDING: KVNamespace;
 	WEBSITE_BUCKET: R2Bucket;
 }
-
 export interface GithubConfig {
 	githubRepoOwner: string;
 	githubRepoName: string;
