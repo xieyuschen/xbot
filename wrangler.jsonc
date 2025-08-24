@@ -26,4 +26,24 @@
 			"bucket_name": "website",
 		},
 	],
+	"vectorize": [
+    {
+      "binding": "VECTORIZE",
+      "index_name": "vector-index"
+    }
+  	],
+    "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rag_db",
+      "database_id": "d811b6c0-beaf-4483-bc38-96bcbf5e3f4c"
+    }
+  	],
+	"workflows": [
+		{
+		"name": "rag",
+		"binding": "RAG_WORKFLOW",
+		"class_name": "RAGWorkflow"
+		}
+	]
 }

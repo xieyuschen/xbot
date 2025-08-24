@@ -98,8 +98,8 @@ export class Common {
 		const r2DomainName = await kv.get(KV_CONFIG_KEY.R2_DOMAIN_NAME);
 		this.cfg = {
 			...this.secrets,
-			github: github,
-			gptModel: gptmodel,
+			github: null,
+			gptModel: gptmodel ?? '',
 			KV_BINDING: kv,
 			WEBSITE_BUCKET: this.env.WEBSITE_BUCKET,
 			allowedUserId: parseInt(allowedUserId, 10),

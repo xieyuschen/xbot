@@ -29,6 +29,10 @@ export interface TypedEnv {
 	/* the fields below are bound by cloudflare when started and they're not config from env*/
 	KV_BINDING: KVNamespace; // Cloudflare Workers KV namespace binding
 	WEBSITE_BUCKET: R2Bucket; // R2 bucket for static website hosting
+
+	RAG_DB: D1Database;
+	Vector_Index: VectorizeIndex;
+	RAG_WORKFLOW: Workflow;
 }
 
 /**
