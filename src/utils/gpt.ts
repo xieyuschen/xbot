@@ -13,6 +13,7 @@ export interface ChatGPTRequest {
 }
 
 export const GEMINI_20_FLASH = 'gemini-2.0-flash';
+export const GEMINI_25_PRO = 'gemini-2.5-pro';
 export const TEXT_EMBEDDING = 'text-embedding-ada-002';
 
 interface EmbeddingResponse {
@@ -119,4 +120,38 @@ export class LLMClient {
 			throw new Error(`Failed to fetch embedding: ${error.message}`);
 		}
 	}
+
+	public async summarize(question: string, answer: string): Promise<string | AsyncIterable<string>>  {
+		const q = `{summarizePrompt} 
+		
+{QStart} 
+{question}
+{QEnd}
+
+{AStart}
+{answer}
+{AEnd}`
+
+		return await this.generateResponse({
+			model: GEMINI_20_FLASH,
+			messages: [{ role: 'user', content: q }],
+		})
+	}
 }
+
+const QStart = '$QStart$';
+const QEnd = '$QEnd$';
+const AStart = '$AStart$';
+const AEnd = '$AEnd$';
+
+const summarizePrompt = `
+The following input contains a QA thread from another llm bot. It might use
+English or Chinese, but you should translate it first if any to English so you can understand it via English,
+then you should summarize the question and answer.
+The question is quoted by {QStart} and {QEnd}, and answer is quoted by {AStart} and {AEnd}.  
+During summarizing, you should focus on the following items and meet these requirements.
+
+1. essential: brief, don't verbose
+2. the question is human input so you need to tidy it up, don't change the original question.
+3. the answer is usually, you need to summarize it by focusing on the terminology and the thinking models.
+`

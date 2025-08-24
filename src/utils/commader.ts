@@ -20,7 +20,7 @@ import PostalMime from 'postal-mime';
 import { ImageCommand } from '../commands/image';
 import { Hono } from 'hono';
 import { PoeRequest, PoeResponse } from './poe';
-import { LLMClient } from './gpt';
+import { GEMINI_25_PRO, LLMClient } from './gpt';
 
 export class Commander extends Common {
 	private commands = [
@@ -178,6 +178,7 @@ export class Commander extends Common {
 			messages: [{ role: 'user', content: question }],
 			// todo: value of stream directly affects the return type, how to handle this?
 			stream: true,
+			model: GEMINI_25_PRO,
 		})) as AsyncIterable<string>;
 
 		const stream = new ReadableStream({
@@ -215,8 +216,13 @@ export class Commander extends Common {
 			},
 		});
 
+		const [s1, s2] = stream.tee()
+		// todo: whether i have a better way? why i need to rely on Response?
+		const answer = await new Response(s2).text();
+		const summaryStream = await llmCli.summarize(question, answer);
+		
 		// Return a new Response object with the stream and the correct SSE headers.
-		return new Response(stream, {
+		return new Response(s1, {
 			status: 200,
 			headers: {
 				'Content-Type': 'text/event-stream',
