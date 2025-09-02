@@ -20,7 +20,8 @@ export class BasicCmd implements Command, Registerable {
 		private desc: string,
 		private kvKey: string,
 		private symbolExample: string,
-		private cfgFieldName: StringKeysOf<Config>
+		private cfgFieldName: StringKeysOf<Config>,
+		private factor: number = 1
 	) {
 		this.cfg = this.cmd.config();
 		this.name = this.cmdName;
@@ -52,6 +53,7 @@ export class BasicCmd implements Command, Registerable {
 				try {
 					const quote = await this.cmd.fmp_client().getQuote(symbol);
 					if (quote) {
+						quote.price = (quote.price || 0) * this.factor;
 						fetchedQuotes.push(quote);
 					} else {
 						failedSymbols.push(symbol);

@@ -41,13 +41,13 @@ export class ImageCommand implements Command, Registerable {
 			await this.cmd.config().WEBSITE_BUCKET.put(id, fileBytes);
 
 			const fileUrl = `${this.cmd.config().r2DomainName}/${id}`;
-			this.cmd.telegram_client().sendMessage(fileUrl);
+			await this.cmd.telegram_client().sendMessage(fileUrl);
 			const messageId = telegramUpdate!.message.message_id;
 			if (messageId === undefined) {
 				throw new Error('Message ID is undefined, cannot send reaction');
 			}
 			await this.cmd.telegram_client().deleteMessage(messageId);
-			this.cmd
+			await this.cmd
 				.github_client()
 				.addContentToGitHubFile(
 					`<img src="${fileUrl}" width="200" height="150">`
