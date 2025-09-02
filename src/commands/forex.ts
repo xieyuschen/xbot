@@ -9,7 +9,8 @@ export class ForexCommand extends BasicCmd {
 			'Get interested forex information',
 			'FOREX_SYMBOLS',
 			'USDCNY',
-			'forexSymbols'
+			'forexSymbols',
+			1000 // forex should use 1000 factor so the change is more obvious.
 		);
 	}
 }
